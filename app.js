@@ -12,7 +12,7 @@ function uid(){return crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.
 function nonNegative(value){const n=Number(value);return Number.isFinite(n)?Math.max(0,round(n)):0;}
 function cleanMembers(members,{ids=false,redistribute=false,budget=0,distributionMode='amount'}={}){
   const safeBudget=nonNegative(budget); let left=safeBudget;
-  const cleaned=(Array.isArray(members)?members:[]).map(m=>({id:ids?(m?.id||uid()):m?.id,name:typeof m?.name==='string'?m.name:'Unnamed',salary:nonNegative(m?.salary),increase:nonNegative(m?.increase),locked:Boolean(m?.locked)}));
+  const cleaned=(Array.isArray(members)?members:[]).map(m=>({id:ids?(m?.id||uid()):m?.id,name:typeof m?.name==='string'?m.name:'Unnamed',salary:nonNegative(m?.salary),increase:nonNegative(m?.increase),locked:Boolean(m?.locked),included:m?.included!==false}));
   // Locks represent committed amounts, so retain them first. If a file exceeds
   // the budget, cap later values rather than showing an invalid total.
   [...cleaned.filter(m=>m.locked),...cleaned.filter(m=>!m.locked)].forEach(member=>{member.increase=round(Math.min(member.increase,left));left=round(left-member.increase)});
@@ -36,7 +36,10 @@ function normalizeImported(imported){
 function active(){return state.members.filter(m=>!m.locked && m.salary>0);}
 function allocated(){return round(state.members.reduce((a,m)=>a+m.increase,0));}
 function remaining(){return Math.max(0,round(state.budget-allocated()));}
-function applicableSalary(){return active().reduce((a,m)=>a+m.salary,0);}
+// Missing `included` is treated as true, preserving the expected default for
+// plans saved before this checkbox was introduced.
+function applicableSalary(){return state.members.filter(m=>m.included!==false&&m.salary>0).reduce((a,m)=>a+m.salary,0);}
+function totalSalary(){return state.members.reduce((sum,m)=>sum+m.salary,0);}
 function save(){localStorage.setItem(STORAGE,JSON.stringify(state));}
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE));}catch{return null}}
 function distribute(){
@@ -51,6 +54,24 @@ function distribute(){
 function setBudget(value){state.budget=Math.max(0,round(value)); const fixed=state.members.filter(m=>m.locked).reduce((a,m)=>a+m.increase,0); if(fixed>state.budget){ // retain locks within cap, reduce last lock if needed
   let left=state.budget; state.members.filter(m=>m.locked).forEach(m=>{m.increase=round(Math.min(m.increase,left));left=round(left-m.increase)});
  } distribute(); render();}
+function refreshLiveAllocations(activeField){
+  const cards=[...document.querySelectorAll('.member-card')];
+  state.members.forEach((m,index)=>{
+    const card=cards[index]; if(!card)return;
+    const percent=m.salary?m.increase/m.salary*100:0;
+    const pctInput=$('.increase-pct',card), euroInput=$('.increase-euro',card), slider=$('.slider',card);
+    if(pctInput!==activeField)pctInput.value=String(round(percent));
+    if(euroInput!==activeField)euroInput.value=String(round(m.increase));
+    slider.value=Math.min(Number(slider.max),Math.round(percent*10)/10);
+    $('.slider-value',card).textContent=pct(percent);
+    $('.new-salary-value',card).textContent=money(m.salary+m.increase);
+    $('.lock',card).setAttribute('aria-pressed',m.locked);
+    $('.lock-text',card).textContent=m.locked?'Locked':'Automatic';
+    $('.lock-symbol',card).textContent=m.locked?'●':'⌁';
+  });
+  $('#totalAllocated').textContent=money(allocated());
+  $('#remaining').textContent=money(remaining());
+}
 function render(){
   const has=state.members.length>0, elig=applicableSalary();
   state.distributionMode=state.distributionMode==='percentage'?'percentage':'amount';
@@ -58,9 +79,9 @@ function render(){
   $('#budgetEuro').disabled=!has; $('#budgetPct').disabled=!has; $('#saveScenario').disabled=!has;
   if(document.activeElement!==$('#budgetEuro'))$('#budgetEuro').value=state.budget ? state.budget.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
   if(document.activeElement!==$('#budgetPct'))$('#budgetPct').value=elig ? (state.budget/elig*100).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}) : '';
-  $('#budgetHint').textContent=has ? `Based on ${money(elig)} of unlocked team salaries.` : 'Add team members to set your budget.';
+  $('#budgetHint').textContent=has ? `Percentage budget is based on ${money(elig)} of included team salaries.` : 'Add team members to set your budget.';
   $('#memberHelp').textContent=state.distributionMode==='percentage' ? 'Unlocked people receive the same percentage increase. Changing a value locks that allocation automatically.' : 'Unlocked people share the remaining budget in equal euro amounts. Changing a value locks that allocation automatically.';
-  $('#totalBudget').textContent=money(state.budget);$('#totalAllocated').textContent=money(allocated());$('#remaining').textContent=money(remaining());$('#eligibleSalary').textContent=money(elig);
+  $('#totalBudget').textContent=money(state.budget);$('#totalAllocated').textContent=money(allocated());$('#remaining').textContent=money(remaining());$('#totalSalaries').textContent=money(totalSalary());
   $('#emptyState').hidden=has; $('#members').innerHTML=''; const tpl=$('#memberTemplate');
   state.members.forEach(m=>{const el=tpl.content.firstElementChild.cloneNode(true);
     // An automatic allocation can be raised to the whole budget: its peers will be
@@ -71,20 +92,34 @@ function render(){
     // already locked.
     const otherCommitted=state.members.filter(x=>x.id!==m.id && x.locked).reduce((a,x)=>a+x.increase,0);
     const maxEuro=round(Math.max(0,state.budget-otherCommitted));const maxPct=m.salary?maxEuro/m.salary*100:0;
-    $('.name',el).value=m.name;$('.salary',el).value=m.salary?m.salary.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
-    $('.increase-pct',el).value=(m.salary?m.increase/m.salary*100:0).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});$('.increase-euro',el).value=m.increase.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});$('.new-salary-value',el).textContent=money(m.salary+m.increase);
-    const slider=$('.slider',el);slider.max=Math.floor(maxPct*10)/10;slider.value=Math.min(slider.max,Math.round((m.salary?m.increase/m.salary*100:0)*10)/10);$('.slider-value',el).textContent=pct(m.salary?m.increase/m.salary*100:0); slider.disabled=!m.salary;
+    $('.name',el).value=m.name;$('.salary',el).value=m.salary?m.salary.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}):'';$('.included',el).checked=m.included!==false;
+    $('.increase-pct',el).value=String(round(m.salary?m.increase/m.salary*100:0));$('.increase-euro',el).value=String(round(m.increase));$('.new-salary-value',el).textContent=money(m.salary+m.increase);
+    const slider=$('.slider',el);slider.max=Math.floor(maxPct*10)/10;slider.value=Math.min(slider.max,Math.round((m.salary?m.increase/m.salary*100:0)*10)/10);$('.increase-pct',el).max=slider.max;$('.increase-euro',el).max=maxEuro;$('.slider-value',el).textContent=pct(m.salary?m.increase/m.salary*100:0); slider.disabled=!m.salary;
     const lock=$('.lock',el);lock.setAttribute('aria-pressed',m.locked);$('.lock-text',el).textContent=m.locked?'Locked':'Automatic';$('.lock-symbol',el).textContent=m.locked?'●':'⌁';
-    $('.name',el).onchange=e=>{m.name=e.target.value||'Unnamed';save();render()};$('.salary',el).onchange=e=>{m.salary=Math.max(0,round(parse(e.target.value)));distribute();save();render()};
+    $('.name',el).onchange=e=>{m.name=e.target.value||'Unnamed';save();render()};$('.salary',el).onchange=e=>{m.salary=Math.max(0,round(parse(e.target.value)));distribute();save();render()};$('.included',el).onchange=e=>{m.included=e.target.checked;save();render()};
     lock.onclick=()=>{m.locked=!m.locked;distribute();save();render()};$('.remove',el).onclick=()=>{state.members=state.members.filter(x=>x.id!==m.id);distribute();save();render()};
-    const manual=e=>{m.increase=round(Math.min(maxEuro,Math.max(0,e)));m.locked=true;distribute();save();render()};
-    slider.oninput=e=>manual(m.salary*(Number(e.target.value)/100));$('.increase-pct',el).onchange=e=>manual(m.salary*parse(e.target.value)/100);$('.increase-euro',el).onchange=e=>manual(parse(e.target.value)); $('#members').append(el);
+    const manual=e=>{const currentMax=round(Math.max(0,state.budget-state.members.filter(x=>x.id!==m.id&&x.locked).reduce((sum,x)=>sum+x.increase,0)));m.increase=round(Math.min(currentMax,Math.max(0,e)));m.locked=true;distribute();save();render()};
+    // During a drag, change only the visible values in this card. Redistribution
+    // and rendering wait until `change` (release), so the range element is
+    // never replaced or otherwise disturbed under the pointer.
+    slider.oninput=e=>{
+      const preview=round(Math.min(maxEuro,Math.max(0,m.salary*(Number(e.target.value)/100))));
+      $('.slider-value',el).textContent=pct(m.salary?preview/m.salary*100:0);
+      $('.increase-pct',el).value=String(round(m.salary?preview/m.salary*100:0));
+      $('.increase-euro',el).value=String(preview);
+      $('.new-salary-value',el).textContent=money(m.salary+preview);
+    };
+    slider.onchange=e=>manual(m.salary*(Number(e.target.value)/100));
+    // Number inputs use a dot as their browser decimal separator. Update the
+    // allocation on every spinner step, without rebuilding the focused field.
+    const liveManual=(field,value)=>{const currentMax=round(Math.max(0,state.budget-state.members.filter(x=>x.id!==m.id&&x.locked).reduce((sum,x)=>sum+x.increase,0)));const capped=round(Math.min(currentMax,Math.max(0,value)));m.increase=capped;m.locked=true;distribute();save();if(field.classList.contains('increase-pct')&&m.salary&&Math.abs(value-capped/m.salary*100)>0.00001)field.value=String(round(capped/m.salary*100));if(field.classList.contains('increase-euro')&&value!==capped)field.value=String(capped);refreshLiveAllocations(field)};
+    $('.increase-pct',el).oninput=e=>liveManual(e.target,m.salary*(Number(e.target.value)||0)/100);$('.increase-euro',el).oninput=e=>liveManual(e.target,Number(e.target.value)||0); $('#members').append(el);
   });
   $('#scenarioEmpty').hidden=state.scenarios.length>0;$('#scenarios').innerHTML='';state.scenarios.forEach((s,index)=>renderScenario(s,index)); save();
 }
 function renderScenario(s,index){const el=$('#scenarioTemplate').content.firstElementChild.cloneNode(true);$('.scenario-title',el).textContent=`Scenario ${state.scenarios.length-index}`;$('.scenario-date',el).textContent=new Date(s.savedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'});$('.scenario-totals',el).innerHTML=`<div><span>Budget</span><b>${money(s.budget)}</b></div><div><span>Allocated</span><b>${money(s.members.reduce((a,m)=>a+m.increase,0))}</b></div><div><span>Remaining</span><b>${money(Math.max(0,s.budget-s.members.reduce((a,m)=>a+m.increase,0)))}</b></div>`;$('.scenario-members',el).innerHTML=s.members.map(m=>`<div class="scenario-member"><b>${escapeHtml(m.name)}</b><span>${pct(m.salary?m.increase/m.salary*100:0)}</span><span>+ ${money(m.increase)}</span><span>${money(m.salary+m.increase)}</span></div>`).join('');$('.restore',el).onclick=()=>{state.members=structuredClone(s.members);state.budget=s.budget;state.distributionMode=s.distributionMode==='percentage'?'percentage':'amount';distribute();render()};$('.delete',el).onclick=()=>{state.scenarios.splice(index,1);render()};$('#scenarios').append(el)}
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function add(){state.members.push({id:uid(),name:'New team member',salary:0,increase:0,locked:false});distribute();render();setTimeout(()=>$('.members .name:last-of-type')?.focus(),0)}
+function add(){state.members.push({id:uid(),name:'New team member',salary:0,increase:0,locked:false,included:true});distribute();render();setTimeout(()=>$('.members .name:last-of-type')?.focus(),0)}
 $('#addMember').onclick=add;$('.add-empty').onclick=add;$('#budgetEuro').onchange=e=>setBudget(parse(e.target.value));$('#budgetPct').onchange=e=>setBudget(applicableSalary()*parse(e.target.value)/100);
 $('#distributionMode').onchange=e=>{state.distributionMode=e.target.value==='percentage'?'percentage':'amount';distribute();render()};
 $('#saveScenario').onclick=()=>{state.scenarios.unshift({savedAt:Date.now(),budget:state.budget,distributionMode:state.distributionMode,members:structuredClone(state.members)});render()};

@@ -8,21 +8,26 @@
   <style>
     body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
     h1, h2, h3 { font-family: ui-serif, Georgia, serif; }
-    .member-card { padding: 16px 18px; }
-    .member-top { display: grid; grid-template-columns: minmax(180px, 1fr) 170px 32px; align-items: end; gap: 18px; }
+    .member-card { padding: 12px 18px; }
+    .member-top { display: grid; grid-template-columns: minmax(180px, 1fr) 170px max-content 32px; align-items: end; gap: 14px; }
     .member-name { display: contents; }
     .name { grid-column: 1; }
-    .member-name > label { grid-column: 2; }
-    .remove { grid-column: 3; align-self: center; }
-    .allocation { margin-top: 14px; padding-top: 14px; }
+    .member-name > label:not(.include-budget) { grid-column: 2; }
+    .include-budget { grid-column: 3; align-self: center; }
+    .remove { grid-column: 4; align-self: center; }
+    .allocation { margin-top: 10px; padding-top: 10px; }
     .allocation-head strong { display: flex; align-items: center; gap: 6px; }
     .allocation-head small { color: var(--muted); font-size: 11px; font-weight: 500; }
     .slider-row { margin: 12px 0; }
     .allocation-fields { grid-template-columns: minmax(120px, 1fr) minmax(135px, 1fr) minmax(170px, 1.25fr); gap: 14px; }
     .distribution-controls { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); }
     .distribution-controls select { font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: white; padding: 8px 10px; }
+    .include-budget { display: flex !important; align-items: center; gap: 6px; font-size: 12px !important; font-weight: 600 !important; white-space: nowrap; }
+    .include-budget input { width: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--green); }
     @media (max-width: 720px) {
       .member-top { grid-template-columns: 1fr 130px 28px; gap: 10px; }
+      .include-budget { grid-column: 1 / span 2; grid-row: 2; }
+      .remove { grid-column: 3; grid-row: 1; }
       .allocation-fields { grid-template-columns: 1fr 1fr; }
       .new-salary { grid-column: span 2; }
       .distribution-controls { align-items: flex-start; flex-direction: column; gap: 5px; }
@@ -46,7 +51,7 @@
       <div><span>Budget</span><strong id="totalBudget">0,00 €</strong></div>
       <div><span>Allocated</span><strong id="totalAllocated">0,00 €</strong></div>
       <div class="remaining"><span>Remaining</span><strong id="remaining">0,00 €</strong></div>
-      <div><span>Eligible salaries</span><strong id="eligibleSalary">0,00 €</strong></div>
+      <div><span>Total team salaries</span><strong id="totalSalaries">0,00 €</strong></div>
     </section>
 
     <section class="members-section">
@@ -65,7 +70,7 @@
 
     <section class="data-tools"><div><h2>Your data</h2><p>All data stays in this browser.</p></div><div><button id="exportData" class="text-button">Export</button><label class="text-button import-label">Import<input id="importData" type="file" accept="application/json"></label></div></section>
   </main>
-  <template id="memberTemplate"><article class="member-card"><div class="member-top"><div class="member-name"><input class="name" aria-label="Name"><label>Annual salary <span class="input-wrap salary-wrap"><input class="salary" inputmode="decimal" aria-label="Annual salary"><b>€</b></span></label></div><button class="remove" title="Remove team member" aria-label="Remove team member">×</button></div><div class="allocation"><div class="allocation-head"><strong>Planned increase <small>— enter either form</small></strong><button class="lock" aria-pressed="false"><span class="lock-symbol">⌁</span><span class="lock-text">Automatic</span></button></div><div class="slider-row"><input class="slider" type="range" min="0" step="0.1" value="0" aria-label="Increase percentage"><output class="slider-value">0,0 %</output></div><div class="allocation-fields"><label>Set increase as %<input class="increase-pct" inputmode="decimal"></label><label>Set increase as €<span class="input-wrap"><input class="increase-euro" inputmode="decimal"><b>€</b></span></label><div class="new-salary"><span>New annual salary</span><strong class="new-salary-value">0,00 €</strong></div></div></div></article></template>
+  <template id="memberTemplate"><article class="member-card"><div class="member-top"><div class="member-name"><input class="name" aria-label="Name"><label>Annual salary <span class="input-wrap salary-wrap"><input class="salary" inputmode="decimal" aria-label="Annual salary"><b>€</b></span></label><label class="include-budget"><input class="included" type="checkbox" checked> Include in budget %</label></div><button class="remove" title="Remove team member" aria-label="Remove team member">×</button></div><div class="allocation"><div class="allocation-head"><strong>Planned increase <small>— enter either form</small></strong><button class="lock" aria-pressed="false"><span class="lock-symbol">⌁</span><span class="lock-text">Automatic</span></button></div><div class="slider-row"><input class="slider" type="range" min="0" step="0.1" value="0" aria-label="Increase percentage"><output class="slider-value">0,0 %</output></div><div class="allocation-fields"><label>Set increase as %<input class="increase-pct" type="number" min="0" step="0.1" inputmode="decimal"></label><label>Set increase as €<span class="input-wrap"><input class="increase-euro" type="number" min="0" step="0.01" inputmode="decimal"><b>€</b></span></label><div class="new-salary"><span>New annual salary</span><strong class="new-salary-value">0,00 €</strong></div></div></div></article></template>
   <template id="scenarioTemplate"><article class="scenario"><div class="scenario-head"><div><strong class="scenario-title"></strong><span class="scenario-date"></span></div><div class="scenario-actions"><button class="restore">Restore</button><button class="delete" aria-label="Delete scenario">×</button></div></div><div class="scenario-totals"></div><details><summary>View allocation</summary><div class="scenario-members"></div></details></article></template>
   <script src="app.js"></script>
 </body>
