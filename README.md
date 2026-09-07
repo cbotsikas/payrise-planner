@@ -4,6 +4,8 @@ A local, single-page browser app for planning how to allocate an annual pay-rise
 
 No server, account, or installation is required. Open `index.html` in a modern browser.
 
+**Live app:** [cbotsikas.github.io/payrise-planner](https://cbotsikas.github.io/payrise-planner/)
+
 ## What it does
 
 - Add, rename, and remove team members, with their current annual salaries.
