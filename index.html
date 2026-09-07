@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayRise Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    h1, h2, h3 { font-family: ui-serif, Georgia, serif; }
+    .member-card { padding: 16px 18px; }
+    .member-top { display: grid; grid-template-columns: minmax(180px, 1fr) 170px 32px; align-items: end; gap: 18px; }
+    .member-name { display: contents; }
+    .name { grid-column: 1; }
+    .member-name > label { grid-column: 2; }
+    .remove { grid-column: 3; align-self: center; }
+    .allocation { margin-top: 14px; padding-top: 14px; }
+    .allocation-head strong { display: flex; align-items: center; gap: 6px; }
+    .allocation-head small { color: var(--muted); font-size: 11px; font-weight: 500; }
+    .slider-row { margin: 12px 0; }
+    .allocation-fields { grid-template-columns: minmax(120px, 1fr) minmax(135px, 1fr) minmax(170px, 1.25fr); gap: 14px; }
+    .distribution-controls { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); }
+    .distribution-controls select { font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: white; padding: 8px 10px; }
+    @media (max-width: 720px) {
+      .member-top { grid-template-columns: 1fr 130px 28px; gap: 10px; }
+      .allocation-fields { grid-template-columns: 1fr 1fr; }
+      .new-salary { grid-column: span 2; }
+      .distribution-controls { align-items: flex-start; flex-direction: column; gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero"><div><p class="eyebrow">TEAM PLANNING</p><h1>PayRise Planner</h1><p class="subtitle">Allocate your annual pay-rise budget across your team with confidence.</p></div><button id="newPlan" class="text-button">Reset plan</button></header>
+
+    <section class="budget-card" aria-labelledby="budget-heading">
+      <div><p class="eyebrow">ANNUAL BUDGET</p><h2 id="budget-heading">How much is available?</h2><p id="budgetHint" class="muted">Add team members to set your budget.</p></div>
+      <div class="budget-inputs">
+        <label>Set budget as amount<span class="input-wrap"><input id="budgetEuro" inputmode="decimal" placeholder="0,00" disabled><b>€</b></span></label>
+        <span class="or">or</span>
+        <label>Set budget as percentage<span class="input-wrap"><input id="budgetPct" inputmode="decimal" placeholder="0,0" disabled><b>%</b></span></label>
+      </div>
+    </section>
+
+    <section class="overview" aria-label="Budget overview">
+      <div><span>Budget</span><strong id="totalBudget">0,00 €</strong></div>
+      <div><span>Allocated</span><strong id="totalAllocated">0,00 €</strong></div>
+      <div class="remaining"><span>Remaining</span><strong id="remaining">0,00 €</strong></div>
+      <div><span>Eligible salaries</span><strong id="eligibleSalary">0,00 €</strong></div>
+    </section>
+
+    <section class="members-section">
+      <div class="section-heading"><div><p class="eyebrow">YOUR TEAM</p><h2>Salaries &amp; increases</h2></div><button id="addMember" class="primary">+ Team member</button></div>
+      <div class="distribution-controls"><label for="distributionMode">Automatic split for unlocked people</label><select id="distributionMode"><option value="amount">Equal euro amounts</option><option value="percentage">Equal percentage increases</option></select></div>
+      <p id="memberHelp" class="helper">Unlocked people share the remaining budget in equal euro amounts. Changing a value locks that allocation automatically.</p>
+      <div id="emptyState" class="empty"><div class="empty-icon">€</div><h3>No team yet</h3><p>Add your first team member and their current annual salary.</p><button class="primary add-empty">Add team member</button></div>
+      <div id="members" class="members"></div>
+    </section>
+
+    <section class="scenarios-section">
+      <div class="section-heading"><div><p class="eyebrow">OPTIONS</p><h2>Saved scenarios</h2></div><button id="saveScenario" class="secondary" disabled>Save snapshot</button></div>
+      <div id="scenarioEmpty" class="scenario-empty">Save a snapshot to compare different allocations.</div>
+      <div id="scenarios" class="scenarios"></div>
+    </section>
+
+    <section class="data-tools"><div><h2>Your data</h2><p>All data stays in this browser.</p></div><div><button id="exportData" class="text-button">Export</button><label class="text-button import-label">Import<input id="importData" type="file" accept="application/json"></label></div></section>
+  </main>
+  <template id="memberTemplate"><article class="member-card"><div class="member-top"><div class="member-name"><input class="name" aria-label="Name"><label>Annual salary <span class="input-wrap salary-wrap"><input class="salary" inputmode="decimal" aria-label="Annual salary"><b>€</b></span></label></div><button class="remove" title="Remove team member" aria-label="Remove team member">×</button></div><div class="allocation"><div class="allocation-head"><strong>Planned increase <small>— enter either form</small></strong><button class="lock" aria-pressed="false"><span class="lock-symbol">⌁</span><span class="lock-text">Automatic</span></button></div><div class="slider-row"><input class="slider" type="range" min="0" step="0.1" value="0" aria-label="Increase percentage"><output class="slider-value">0,0 %</output></div><div class="allocation-fields"><label>Set increase as %<input class="increase-pct" inputmode="decimal"></label><label>Set increase as €<span class="input-wrap"><input class="increase-euro" inputmode="decimal"><b>€</b></span></label><div class="new-salary"><span>New annual salary</span><strong class="new-salary-value">0,00 €</strong></div></div></div></article></template>
+  <template id="scenarioTemplate"><article class="scenario"><div class="scenario-head"><div><strong class="scenario-title"></strong><span class="scenario-date"></span></div><div class="scenario-actions"><button class="restore">Restore</button><button class="delete" aria-label="Delete scenario">×</button></div></div><div class="scenario-totals"></div><details><summary>View allocation</summary><div class="scenario-members"></div></details></article></template>
+  <script src="app.js"></script>
+</body>
+</html>
