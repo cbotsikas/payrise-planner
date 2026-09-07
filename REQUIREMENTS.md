@@ -19,6 +19,6 @@ PayRise Planner is a single-page, local-first tool for allocating an annual sala
 
 ## Scenarios and data
 
-- A saved, unnamed snapshot records the team, salaries, allocations, locks, automatic-split mode, budget, timestamp, totals, and remaining amount.
-- Saved scenarios remain in browser local storage, can be expanded to inspect the per-member breakdown, restored, or deleted.
+- A saved snapshot has an editable name and records the team, salaries, allocations, locks, automatic-split mode, budget, timestamp, totals, and remaining amount.
+- Saved scenarios remain in browser local storage, can be dragged into a preferred order, expanded to inspect the per-member breakdown, restored, or deleted.
 - The complete planner data can be exported as JSON and imported later.

@@ -18,7 +18,7 @@ No server, account, or installation is required. Open `index.html` in a modern b
 - Adjust an individual increase by slider (0.1 percentage-point increments), percentage, or euro amount.
 - Prevent allocations from exceeding the available budget; unallocated budget is allowed.
 - See each person’s proposed new annual salary, plus overall budget, allocated amount, and remaining amount.
-- Save, restore, inspect, and delete local scenario snapshots.
+- Save, name, reorder, restore, inspect, and delete local scenario snapshots.
 - Export all planner data as JSON and import it later.
 
 The UI is English; euro and number formatting use German conventions, such as `4.512,43 €`.
