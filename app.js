@@ -40,6 +40,11 @@ function remaining(){return Math.max(0,round(state.budget-allocated()));}
 // plans saved before this checkbox was introduced.
 function applicableSalary(){return state.members.filter(m=>m.included!==false&&m.salary>0).reduce((a,m)=>a+m.salary,0);}
 function totalSalary(){return state.members.reduce((sum,m)=>sum+m.salary,0);}
+function paintSlider(slider,increase,availableEuro){
+  const scale=state.budget||1;
+  slider.style.setProperty('--slider-value',`${Math.min(100,Math.max(0,increase/scale*100))}%`);
+  slider.style.setProperty('--unavailable-start',`${Math.min(100,Math.max(0,availableEuro/scale*100))}%`);
+}
 function save(){localStorage.setItem(STORAGE,JSON.stringify(state));}
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE));}catch{return null}}
 function distribute(){
@@ -63,6 +68,8 @@ function refreshLiveAllocations(activeField){
     if(pctInput!==activeField)pctInput.value=String(round(percent));
     if(euroInput!==activeField)euroInput.value=String(round(m.increase));
     slider.value=Math.min(Number(slider.max),Math.round(percent*10)/10);
+    const availableEuro=round(Math.max(0,state.budget-state.members.filter(x=>x.id!==m.id&&x.locked).reduce((sum,x)=>sum+x.increase,0)));
+    paintSlider(slider,m.increase,availableEuro);
     $('.slider-value',card).textContent=pct(percent);
     $('.new-salary-value',card).textContent=money(m.salary+m.increase);
     $('.lock',card).setAttribute('aria-pressed',m.locked);
@@ -91,10 +98,13 @@ function render(){
     // recalculated when this value is changed, including when this member was
     // already locked.
     const otherCommitted=state.members.filter(x=>x.id!==m.id && x.locked).reduce((a,x)=>a+x.increase,0);
-    const maxEuro=round(Math.max(0,state.budget-otherCommitted));const maxPct=m.salary?maxEuro/m.salary*100:0;
+    const maxEuro=round(Math.max(0,state.budget-otherCommitted));
+    // Keep the slider scale stable: its maximum always means this person
+    // receiving the full team budget, irrespective of other locked values.
+    const maxPct=m.salary?state.budget/m.salary*100:0;
     $('.name',el).value=m.name;$('.salary',el).value=m.salary?m.salary.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}):'';$('.included',el).checked=m.included!==false;
     $('.increase-pct',el).value=String(round(m.salary?m.increase/m.salary*100:0));$('.increase-euro',el).value=String(round(m.increase));$('.new-salary-value',el).textContent=money(m.salary+m.increase);
-    const slider=$('.slider',el);slider.max=Math.floor(maxPct*10)/10;slider.value=Math.min(slider.max,Math.round((m.salary?m.increase/m.salary*100:0)*10)/10);$('.increase-pct',el).max=slider.max;$('.increase-euro',el).max=maxEuro;$('.slider-value',el).textContent=pct(m.salary?m.increase/m.salary*100:0); slider.disabled=!m.salary;
+    const slider=$('.slider',el);slider.max=Math.floor(maxPct*10)/10;slider.value=Math.min(slider.max,Math.round((m.salary?m.increase/m.salary*100:0)*10)/10);paintSlider(slider,m.increase,maxEuro);$('.increase-pct',el).max=slider.max;$('.increase-euro',el).max=maxEuro;$('.slider-value',el).textContent=pct(m.salary?m.increase/m.salary*100:0); slider.disabled=!m.salary;
     const lock=$('.lock',el);lock.setAttribute('aria-pressed',m.locked);$('.lock-text',el).textContent=m.locked?'Locked':'Automatic';$('.lock-symbol',el).textContent=m.locked?'●':'⌁';
     $('.name',el).onchange=e=>{m.name=e.target.value||'Unnamed';save();render()};$('.salary',el).onchange=e=>{m.salary=Math.max(0,round(parse(e.target.value)));distribute();save();render()};$('.included',el).onchange=e=>{m.included=e.target.checked;save();render()};
     lock.onclick=()=>{m.locked=!m.locked;distribute();save();render()};$('.remove',el).onclick=()=>{state.members=state.members.filter(x=>x.id!==m.id);distribute();save();render()};
@@ -108,6 +118,7 @@ function render(){
       $('.increase-pct',el).value=String(round(m.salary?preview/m.salary*100:0));
       $('.increase-euro',el).value=String(preview);
       $('.new-salary-value',el).textContent=money(m.salary+preview);
+      paintSlider(slider,preview,maxEuro);
     };
     slider.onchange=e=>manual(m.salary*(Number(e.target.value)/100));
     // Number inputs use a dot as their browser decimal separator. Update the

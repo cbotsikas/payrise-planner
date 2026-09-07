@@ -24,6 +24,11 @@
     .distribution-controls select { font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: white; padding: 8px 10px; }
     .include-budget { display: flex !important; align-items: center; gap: 6px; font-size: 12px !important; font-weight: 600 !important; white-space: nowrap; }
     .include-budget input { width: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--green); }
+    .slider { -webkit-appearance: none; appearance: none; background: transparent; }
+    .slider::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: repeating-linear-gradient(135deg, rgba(190, 83, 76, .10) 0 4px, rgba(190, 83, 76, .24) 4px 6px) right / calc(100% - var(--unavailable-start, 100%)) 100% no-repeat, linear-gradient(to right, var(--green) 0 var(--slider-value, 0%), #d7dfdb var(--slider-value, 0%) var(--unavailable-start, 100%), #f6e8e6 var(--unavailable-start, 100%) 100%); }
+    .slider::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--green); }
+    .slider::-moz-range-track { height: 6px; border-radius: 999px; background: repeating-linear-gradient(135deg, rgba(190, 83, 76, .10) 0 4px, rgba(190, 83, 76, .24) 4px 6px) right / calc(100% - var(--unavailable-start, 100%)) 100% no-repeat, linear-gradient(to right, var(--green) 0 var(--slider-value, 0%), #d7dfdb var(--slider-value, 0%) var(--unavailable-start, 100%), #f6e8e6 var(--unavailable-start, 100%) 100%); }
+    .slider::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--green); }
     @media (max-width: 720px) {
       .member-top { grid-template-columns: 1fr 130px 28px; gap: 10px; }
       .include-budget { grid-column: 1 / span 2; grid-row: 2; }
