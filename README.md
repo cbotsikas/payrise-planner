@@ -10,6 +10,7 @@ No server, account, or installation is required. Open `index.html` in a modern b
 
 - Add, rename, and remove team members, with their current annual salaries.
 - Set the available annual budget in euros or as a percentage of eligible salaries.
+- See total team salaries, and exclude an individual salary from the percentage-budget basis when needed.
 - Allocate remaining budget automatically to unlocked people in one of two ways:
   - **Equal euro amounts**
   - **Equal percentage increases**, proportional to current salary
