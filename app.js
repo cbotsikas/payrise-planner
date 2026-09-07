@@ -2,6 +2,7 @@ const STORAGE = 'payrise-planner-v1';
 const euroFmt = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
 const numFmt = new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 let state = load() || {members:[], budget:0, distributionMode:'amount', scenarios:[]};
+let privacyMode=Boolean(state.budget||state.members?.some(member=>Number(member.salary)||Number(member.increase))||state.scenarios?.length);
 state.scenarios=Array.isArray(state.scenarios)?state.scenarios:[];
 state.scenarios.forEach((scenario,index)=>{if(typeof scenario.name!=='string'||!scenario.name.trim())scenario.name=`Scenario ${state.scenarios.length-index}`});
 // Query within a freshly cloned template when a root is supplied; otherwise
@@ -9,7 +10,9 @@ state.scenarios.forEach((scenario,index)=>{if(typeof scenario.name!=='string'||!
 const $ = (selector, root = document) => root.querySelector(selector);
 const round = n => Math.round((Number(n)||0)*100)/100;
 function parse(value){ return Number(String(value||'').trim().replace(/\./g,'').replace(',','.')) || 0; }
-function money(n){return euroFmt.format(round(n));} function pct(n){return numFmt.format(n)+' %';}
+function scramble(value){const greek=[...'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ'];const randomLetter=()=>greek[Math.floor(Math.random()*greek.length)];const source=String(value);const digits=source.match(/\d/g)||[];if(digits.length<=7)return source.replace(/\d/g,randomLetter);const suffix=source.includes('€')?' €':'';return `${randomLetter()}${randomLetter()}.${randomLetter()}${randomLetter()}${randomLetter()},${randomLetter()}${randomLetter()}${suffix}`;}
+function money(n){const value=euroFmt.format(round(n));return privacyMode?scramble(value):value;} function pct(n){return numFmt.format(n)+' %';}
+function setAmountInput(input,value,{numeric=false,decimals=2}={}){const visible=Number(value||0).toLocaleString('de-DE',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});if(privacyMode){input.type='text';input.readOnly=true;input.value=scramble(visible)}else{input.type=numeric?'number':'text';input.readOnly=false;input.value=numeric?String(round(value)):visible;}}
 function uid(){return crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random().toString(16).slice(2);}
 function nonNegative(value){const n=Number(value);return Number.isFinite(n)?Math.max(0,round(n)):0;}
 function cleanMembers(members,{ids=false,redistribute=false,budget=0,distributionMode='amount'}={}){
@@ -83,10 +86,12 @@ function refreshLiveAllocations(activeField){
 }
 function render(){
   const has=state.members.length>0, elig=applicableSalary();
+  $('#privacyToggle').setAttribute('aria-pressed',privacyMode);$('#privacyToggle').textContent=privacyMode?'Show € amounts':'Hide € amounts';
+  $('#privacyNotice').hidden=!privacyMode;
   state.distributionMode=state.distributionMode==='percentage'?'percentage':'amount';
   $('#distributionMode').value=state.distributionMode;
   $('#budgetEuro').disabled=!has; $('#budgetPct').disabled=!has; $('#saveScenario').disabled=!has;
-  if(document.activeElement!==$('#budgetEuro'))$('#budgetEuro').value=state.budget ? state.budget.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+  if(document.activeElement!==$('#budgetEuro')||privacyMode)setAmountInput($('#budgetEuro'),state.budget,{decimals:2});
   if(document.activeElement!==$('#budgetPct'))$('#budgetPct').value=elig ? (state.budget/elig*100).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}) : '';
   $('#budgetHint').textContent=has ? `Percentage budget is based on ${money(elig)} of included team salaries.` : 'Add team members to set your budget.';
   $('#memberHelp').textContent=state.distributionMode==='percentage' ? 'Unlocked people receive the same percentage increase. Changing a value locks that allocation automatically.' : 'Unlocked people share the remaining budget in equal euro amounts. Changing a value locks that allocation automatically.';
@@ -104,8 +109,8 @@ function render(){
     // Keep the slider scale stable: its maximum always means this person
     // receiving the full team budget, irrespective of other locked values.
     const maxPct=m.salary?state.budget/m.salary*100:0;
-    $('.name',el).value=m.name;$('.salary',el).value=m.salary?m.salary.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}):'';$('.included',el).checked=m.included!==false;
-    $('.increase-pct',el).value=String(round(m.salary?m.increase/m.salary*100:0));$('.increase-euro',el).value=String(round(m.increase));$('.new-salary-value',el).textContent=money(m.salary+m.increase);
+    $('.name',el).value=m.name;setAmountInput($('.salary',el),m.salary,{decimals:2});$('.included',el).checked=m.included!==false;
+    $('.increase-pct',el).value=String(round(m.salary?m.increase/m.salary*100:0));setAmountInput($('.increase-euro',el),m.increase,{numeric:true,decimals:2});$('.new-salary-value',el).textContent=money(m.salary+m.increase);
     const slider=$('.slider',el);slider.max=Math.floor(maxPct*10)/10;slider.value=Math.min(slider.max,Math.round((m.salary?m.increase/m.salary*100:0)*10)/10);paintSlider(slider,m.increase,maxEuro);$('.increase-pct',el).max=slider.max;$('.increase-euro',el).max=maxEuro;$('.slider-value',el).textContent=pct(m.salary?m.increase/m.salary*100:0); slider.disabled=!m.salary;
     const lock=$('.lock',el);lock.setAttribute('aria-pressed',m.locked);$('.lock-text',el).textContent=m.locked?'Locked':'Automatic';$('.lock-symbol',el).textContent=m.locked?'●':'⌁';
     $('.name',el).onchange=e=>{m.name=e.target.value||'Unnamed';save();render()};$('.salary',el).onchange=e=>{m.salary=Math.max(0,round(parse(e.target.value)));distribute();save();render()};$('.included',el).onchange=e=>{m.included=e.target.checked;save();render()};
@@ -118,7 +123,7 @@ function render(){
       const preview=round(Math.min(maxEuro,Math.max(0,m.salary*(Number(e.target.value)/100))));
       $('.slider-value',el).textContent=pct(m.salary?preview/m.salary*100:0);
       $('.increase-pct',el).value=String(round(m.salary?preview/m.salary*100:0));
-      $('.increase-euro',el).value=String(preview);
+      setAmountInput($('.increase-euro',el),preview,{numeric:true,decimals:2});
       $('.new-salary-value',el).textContent=money(m.salary+preview);
       paintSlider(slider,preview,maxEuro);
     };
@@ -137,6 +142,9 @@ $('#addMember').onclick=add;$('.add-empty').onclick=add;$('#budgetEuro').onchang
 $('#distributionMode').onchange=e=>{state.distributionMode=e.target.value==='percentage'?'percentage':'amount';distribute();render()};
 $('#saveScenario').onclick=()=>{state.scenarios.unshift({name:`Scenario ${state.scenarios.length+1}`,savedAt:Date.now(),budget:state.budget,distributionMode:state.distributionMode,members:structuredClone(state.members)});render()};
 $('#newPlan').onclick=()=>{if(confirm('Reset the current plan? Saved scenarios will be kept.')){state.members=[];state.budget=0;render()}};
+function togglePrivacy(){privacyMode=!privacyMode;$('#privacyToggle').setAttribute('aria-pressed',privacyMode);$('#privacyToggle').textContent=privacyMode?'Show € amounts':'Hide € amounts';render()}
+$('#privacyToggle').onclick=togglePrivacy;window.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q'){e.preventDefault();togglePrivacy()}});
+$('#clearData').onclick=()=>{if(confirm('Permanently delete the current plan and every saved scenario from this browser? Export your data first if you may need it later.')){localStorage.removeItem(STORAGE);state={members:[],budget:0,distributionMode:'amount',scenarios:[]};render()}};
 $('#exportData').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='payrise-planner-export.json';a.click();URL.revokeObjectURL(a.href)};
 $('#importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const imported=JSON.parse(r.result);if(!Array.isArray(imported.members)||!Array.isArray(imported.scenarios))throw Error();state=normalizeImported(imported);render()}catch{alert('This file is not a valid export.')}};r.readAsText(f);e.target.value=''};
 render();

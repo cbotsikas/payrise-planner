@@ -22,3 +22,6 @@ PayRise Planner is a single-page, local-first tool for allocating an annual sala
 - A saved snapshot has an editable name and records the team, salaries, allocations, locks, automatic-split mode, budget, timestamp, totals, and remaining amount.
 - Saved scenarios remain in browser local storage, can be dragged into a preferred order, expanded to inspect the per-member breakdown, restored, or deleted.
 - The complete planner data can be exported as JSON and imported later.
+- A confirmed clear-all action permanently removes the current plan and all saved scenarios from browser storage.
+- A visual privacy mode replaces displayed amount digits with random uppercase Greek letters while preserving punctuation. Masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €` and cannot reveal a salary range; amount fields omit the euro symbol because their suffix supplies it. It starts enabled when stored data exists, can be toggled from the page or with `Ctrl+Q`, and does not change stored data.
+- A fixed on-screen indicator is visible while privacy mode is active.

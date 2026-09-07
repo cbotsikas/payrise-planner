@@ -36,6 +36,12 @@ Current planner data and snapshots are stored in the browser’s `localStorage`.
 
 Use **Export** to create a portable JSON backup before clearing browser data or moving to another browser or device.
 
+Use **Clear all data** to permanently remove the active plan and every saved scenario from the current browser.
+
+Use **Hide € amounts** (or `Ctrl+Q`) to toggle visual privacy mode. It replaces digits with random uppercase Greek letters while preserving punctuation; masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €`. Amount fields omit the euro symbol because their existing suffix supplies it. Privacy mode starts enabled when stored data exists and does not change the stored plan.
+
+When privacy mode is active, a fixed on-screen indicator reminds you that euro amounts are hidden and that `Ctrl+Q` reveals them.
+
 ## AI assistance
 
 This project was created with assistance from AI. Review and test the code before using it for decisions that affect people’s pay.
