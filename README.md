@@ -32,11 +32,13 @@ Alternatively, serve the folder with any static-file server. No build step or pa
 
 ## Data and privacy
 
-Current planner data and snapshots are stored in the browser’s `localStorage`. Nothing is sent to a remote service.
+Current planner data and saved scenarios are stored in the browser’s `localStorage`. Nothing is sent to a remote service.
 
 Use **Export** to create a portable JSON backup before clearing browser data or moving to another browser or device.
 
 Use **Reset plan** to clear custom allocations and locks while retaining the team, salaries, budget, budget-inclusion choices, and saved scenarios. The retained budget is then split again using the selected automatic mode.
+
+Each allocation slider includes a legend for the amount allocated to that person, the amount still available, and amounts committed to other locked people. The **Auto split** control explains whether a member will change with the available budget or has a fixed allocation.
 
 Use **Clear all data** to permanently remove the active plan and every saved scenario from the current browser.
 

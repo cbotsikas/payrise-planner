@@ -38,7 +38,19 @@
     .scenario-title { width: 180px; padding: 2px 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; font-size: 16px; font-weight: 700; }
     .scenario-title:focus { box-shadow: none; border-bottom-color: var(--green); }
     .danger-button { color: #a44742; }
-    .header-actions { display: flex; align-items: center; gap: 5px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .header-actions .header-action { min-height:42px; padding:10px 13px; border:1px solid #b9dbc9; border-radius:8px; background:#f6fbf8; color:var(--green); font:inherit; font-weight:700; cursor:pointer; }
+    .header-actions .header-action:hover { background:#ecf7f1; }.header-actions .header-action:disabled { opacity:.5; cursor:not-allowed; }
+    .header-actions .header-save { border-color:var(--green); background:var(--green); color:white; }.header-actions .header-save:hover { background:#095e46; }
+    .header-actions .header-reset { border-color:transparent; background:transparent; color:var(--muted); }.header-actions .header-reset:hover { border-color:#f0c5c1; background:#fff3f1; color:#a44742; }
+    .header-actions .header-muted { border-color:transparent; background:transparent; color:var(--green); }.header-actions .header-muted:hover { border-color:#b9dbc9; background:#ecf7f1; }
+    .primary { min-height:42px; }.secondary, .text-button { min-height:38px; }
+    .lock { min-height:32px; }.restore { min-height:32px; padding:6px 9px; border:1px solid transparent; border-radius:7px; }.restore:hover { border-color:#b9dbc9; background:#ecf7f1; }
+    .remove, .delete { display:inline-grid; place-items:center; width:32px; height:32px; min-width:32px; min-height:32px; padding:0; border:1px solid transparent; border-radius:7px; background:white; font-size:18px; }.scenario-drag { display:inline-grid; place-items:center; min-width:32px; min-height:32px; border-radius:7px; }.remove:hover, .delete:hover, .remove:focus-visible, .delete:focus-visible { border-color:#f0c5c1; background:#fff3f1; color:#a44742; }
+    .text-button { border:1px solid transparent; }.text-button:hover { border-color:#b9dbc9; background:#f6fbf8; }.danger-button:hover { border-color:#f0c5c1; background:#fff3f1; }
+    .reset-action { color:var(--muted); }.reset-action:hover { color:#a44742; }
+    .data-action { display:inline-flex; align-items:center; min-height:38px; padding:8px 11px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--green); font:inherit; font-weight:700; cursor:pointer; }.data-action:hover { border-color:#b9dbc9; background:#f6fbf8; }
+    .data-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }.data-tools { border:1px solid var(--line); background:white; box-shadow:var(--shadow); }
     .hero { position: sticky; top: 0; z-index: 20; padding: 14px 0; border-bottom: 1px solid transparent; background: transparent; transition: padding .24s ease, background .24s ease, box-shadow .24s ease; }
     .hero h1 { transition: font-size .24s ease, letter-spacing .24s ease; }
     .hero .eyebrow, .hero .subtitle { max-height: 40px; overflow: hidden; opacity: 1; transform: translateY(0); transition: max-height .24s ease, margin .24s ease, opacity .16s ease, transform .24s ease; }
@@ -46,7 +58,14 @@
     .hero.is-sticky .eyebrow, .hero.is-sticky .subtitle { max-height: 0; margin-top: 0; margin-bottom: 0; opacity: 0; pointer-events: none; transform: translateY(-6px); }
     .hero.is-sticky h1 { font-size: 21px; letter-spacing: -.6px; }
     @media (prefers-reduced-motion: reduce) { .hero, .hero h1, .hero .eyebrow, .hero .subtitle { transition: none; } }
-    .privacy-notice { position: fixed; right: 20px; bottom: 20px; z-index: 10; padding: 10px 13px; border: 1px solid #c7d8d0; border-radius: 999px; background: #17332c; color: white; box-shadow: 0 8px 22px #17332c33; font-size: 13px; font-weight: 700; }
+    .privacy-notice { position: fixed; right: 20px; bottom: 20px; z-index: 10; padding: 10px 13px; border: 1px solid #c7d8d0; border-radius: 999px; background: #17332c; color: white; box-shadow: 0 8px 22px #17332c33; font-size: 13px; font-weight: 700; pointer-events:none; }
+    button:focus-visible, summary:focus-visible, .scenario-drag:focus-visible { outline: 3px solid #0e765980; outline-offset: 3px; }
+    .slider-legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin:-5px 0 12px; color:var(--muted); font-size:11px; }
+    .slider-legend span { display:flex; align-items:center; gap:5px; }
+    .slider-legend i { width:9px; height:9px; border-radius:50%; background:var(--green); }
+    .slider-legend .available i { background:#d7dfdb; }.slider-legend .committed i { background:#c56f69; }
+    .budget-progress { margin:9px 0 0; color:var(--muted); font-size:12px; font-weight:600; }
+    .scenarios-section { margin-top:42px; }.overview { margin-bottom:40px; }.scenario-totals { flex-wrap:wrap; }
     @media (max-width: 720px) {
       .hero.is-sticky h1 { font-size: 20px; }
       .member-top { grid-template-columns: 1fr 130px 28px; gap: 10px; }
@@ -55,15 +74,22 @@
       .allocation-fields { grid-template-columns: 1fr 1fr; }
       .new-salary { grid-column: span 2; }
       .distribution-controls { align-items: flex-start; flex-direction: column; gap: 5px; }
+      .shell { padding-bottom:calc(104px + env(safe-area-inset-bottom)); }
+      .header-actions { flex-wrap:wrap; justify-content:flex-start; gap:8px; margin-top:12px; }
+      .header-actions .header-action:first-child { order:-1; }
+      .budget-inputs { display:grid; grid-template-columns:1fr; gap:12px; }
+      .budget-inputs .or { display:none; }
+      .budget-inputs label { width:100%; }.budget-inputs input { width:100%; }
+      .scenario-totals { gap:9px 14px; }.privacy-notice { right:12px; bottom:max(12px, env(safe-area-inset-bottom)); max-width:calc(100vw - 24px); }
     }
   </style>
 </head>
 <body>
   <main class="shell">
-    <header class="hero"><div><p class="eyebrow">TEAM PLANNING</p><h1>PayRise Planner</h1><p class="subtitle">Allocate your annual pay-rise budget across your team with confidence.</p></div><div class="header-actions"><button id="privacyToggle" class="text-button" aria-pressed="false" title="Toggle privacy mode (Ctrl+Q)">Hide € amounts</button><button id="newPlan" class="text-button">Reset plan</button></div></header>
+    <header class="hero"><div><p class="eyebrow">TEAM PLANNING</p><h1>PayRise Planner</h1><p class="subtitle">Allocate your annual pay-rise budget across your team with confidence.</p></div><div class="header-actions"><button id="saveScenario" class="header-action header-save" disabled>Save scenario</button><button id="privacyToggle" class="header-action header-muted" aria-pressed="false" title="Toggle privacy mode (Ctrl+Q)">Hide € amounts</button><button id="newPlan" class="header-action header-reset">Reset plan</button></div></header>
 
     <section class="budget-card" aria-labelledby="budget-heading">
-      <div><p class="eyebrow">ANNUAL BUDGET</p><h2 id="budget-heading">How much is available?</h2><p id="budgetHint" class="muted">Add team members to set your budget.</p></div>
+      <div><p class="eyebrow">ANNUAL BUDGET</p><h2 id="budget-heading">How much is available?</h2><p id="budgetHint" class="muted">Add team members to set your budget.</p><p class="budget-progress" id="budgetProgress" aria-live="polite"></p></div>
       <div class="budget-inputs">
         <label>Set budget as amount<span class="input-wrap"><input id="budgetEuro" inputmode="decimal" placeholder="0,00" disabled><b>€</b></span></label>
         <span class="or">or</span>
@@ -87,15 +113,15 @@
     </section>
 
     <section class="scenarios-section">
-      <div class="section-heading"><div><p class="eyebrow">OPTIONS</p><h2>Saved scenarios</h2></div><button id="saveScenario" class="secondary" disabled>Save snapshot</button></div>
-      <div id="scenarioEmpty" class="scenario-empty">Save a snapshot to compare different allocations.</div>
+      <div class="section-heading"><div><p class="eyebrow">OPTIONS</p><h2>Saved scenarios</h2></div></div>
+      <div id="scenarioEmpty" class="scenario-empty">Save a scenario to compare different allocations.</div>
       <div id="scenarios" class="scenarios"></div>
     </section>
 
-    <section class="data-tools"><div><h2>Your data</h2><p>All data stays in this browser.</p></div><div><button id="exportData" class="text-button">Export</button><label class="text-button import-label">Import<input id="importData" type="file" accept="application/json"></label><button id="clearData" class="text-button danger-button">Clear all data</button></div></section>
+    <section class="data-tools"><div><h2>Your data</h2><p>All data stays in this browser.</p></div><div class="data-actions"><button id="exportData" class="data-action">Export</button><label class="data-action import-label">Import<input id="importData" type="file" accept="application/json"></label><button id="clearData" class="text-button danger-button reset-action">Clear all data</button></div></section>
   </main>
   <div id="privacyNotice" class="privacy-notice" role="status" hidden>€ amounts hidden · Ctrl+Q to show</div>
-  <template id="memberTemplate"><article class="member-card"><div class="member-top"><div class="member-name"><input class="name" aria-label="Name"><label>Annual salary <span class="input-wrap salary-wrap"><input class="salary" inputmode="decimal" aria-label="Annual salary"><b>€</b></span></label><label class="include-budget"><input class="included" type="checkbox" checked> Include in budget %</label></div><button class="remove" title="Remove team member" aria-label="Remove team member">×</button></div><div class="allocation"><div class="allocation-head"><strong>Planned increase <small>— enter either form</small></strong><button class="lock" aria-pressed="false"><span class="lock-symbol">⌁</span><span class="lock-text">Automatic</span></button></div><div class="slider-row"><input class="slider" type="range" min="0" step="0.1" value="0" aria-label="Increase percentage"><output class="slider-value">0,0 %</output></div><div class="allocation-fields"><label>Set increase as %<input class="increase-pct" type="number" min="0" step="0.1" inputmode="decimal"></label><label>Set increase as €<span class="input-wrap"><input class="increase-euro" type="number" min="0" step="0.01" inputmode="decimal"><b>€</b></span></label><div class="new-salary"><span>New annual salary</span><strong class="new-salary-value">0,00 €</strong></div></div></div></article></template>
+  <template id="memberTemplate"><article class="member-card"><div class="member-top"><div class="member-name"><input class="name" aria-label="Team member name" title="Team member name"><label>Annual salary <span class="input-wrap salary-wrap"><input class="salary" inputmode="decimal" aria-label="Annual salary"><b>€</b></span></label><label class="include-budget" title="Includes this salary only when calculating a budget entered as a percentage. It does not prevent this person from receiving an increase."><input class="included" type="checkbox" checked> Include in budget %</label></div><button class="remove" title="Remove team member" aria-label="Remove team member">×</button></div><div class="allocation"><div class="allocation-head"><strong>Planned increase <small>— enter either form</small></strong><button class="lock" aria-pressed="false" title="Auto split: this person changes with the available budget."><span class="lock-symbol">⌁</span><span class="lock-text">Auto split</span></button></div><div class="slider-row"><input class="slider" type="range" min="0" step="0.1" value="0" aria-label="Increase percentage"><output class="slider-value">0,0 %</output></div><div class="slider-legend" aria-label="Allocation slider legend"><span><i></i>Allocated to this person</span><span class="available"><i></i>Still available</span><span class="committed"><i></i>Committed to others</span></div><div class="allocation-fields"><label>Set increase as %<input class="increase-pct" type="number" min="0" step="0.1" inputmode="decimal"></label><label>Set increase as €<span class="input-wrap"><input class="increase-euro" type="number" min="0" step="0.01" inputmode="decimal"><b>€</b></span></label><div class="new-salary"><span>New annual salary</span><strong class="new-salary-value">0,00 €</strong></div></div></div></article></template>
   <template id="scenarioTemplate"><article class="scenario"><div class="scenario-head"><div class="scenario-identity"><button class="scenario-drag" draggable="true" title="Drag to reorder" aria-label="Drag scenario to reorder">⠿</button><div><input class="scenario-title" aria-label="Scenario name"><span class="scenario-date"></span></div></div><div class="scenario-actions"><button class="restore">Restore</button><button class="delete" aria-label="Delete scenario">×</button></div></div><div class="scenario-totals"></div><details><summary>View allocation</summary><div class="scenario-members"></div></details></article></template>
   <script src="app.js"></script>
 </body>
