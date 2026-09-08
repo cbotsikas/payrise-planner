@@ -141,7 +141,7 @@ function add(){state.members.push({id:uid(),name:'New team member',salary:0,incr
 $('#addMember').onclick=add;$('.add-empty').onclick=add;$('#budgetEuro').onchange=e=>setBudget(parse(e.target.value));$('#budgetPct').onchange=e=>setBudget(applicableSalary()*parse(e.target.value)/100);
 $('#distributionMode').onchange=e=>{state.distributionMode=e.target.value==='percentage'?'percentage':'amount';distribute();render()};
 $('#saveScenario').onclick=()=>{state.scenarios.unshift({name:`Scenario ${state.scenarios.length+1}`,savedAt:Date.now(),budget:state.budget,distributionMode:state.distributionMode,members:structuredClone(state.members)});render()};
-$('#newPlan').onclick=()=>{if(confirm('Reset the current plan? Saved scenarios will be kept.')){state.members=[];state.budget=0;render()}};
+$('#newPlan').onclick=()=>{if(confirm('Reset allocations and locks? Team members, salaries, budget, and saved scenarios will be kept.')){state.members.forEach(member=>{member.increase=0;member.locked=false});distribute();render()}};
 function togglePrivacy(){privacyMode=!privacyMode;$('#privacyToggle').setAttribute('aria-pressed',privacyMode);$('#privacyToggle').textContent=privacyMode?'Show € amounts':'Hide € amounts';render()}
 $('#privacyToggle').onclick=togglePrivacy;window.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q'){e.preventDefault();togglePrivacy()}});
 const hero=$('.hero');const stickyThreshold=4;const updateStickyHeader=()=>hero.classList.toggle('is-sticky',window.scrollY>stickyThreshold);window.addEventListener('scroll',updateStickyHeader,{passive:true});updateStickyHeader();

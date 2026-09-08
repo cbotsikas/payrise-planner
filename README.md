@@ -36,6 +36,8 @@ Current planner data and snapshots are stored in the browser’s `localStorage`.
 
 Use **Export** to create a portable JSON backup before clearing browser data or moving to another browser or device.
 
+Use **Reset plan** to clear custom allocations and locks while retaining the team, salaries, budget, budget-inclusion choices, and saved scenarios. The retained budget is then split again using the selected automatic mode.
+
 Use **Clear all data** to permanently remove the active plan and every saved scenario from the current browser.
 
 Use **Hide € amounts** (or `Ctrl+Q`) to toggle visual privacy mode. It replaces digits with random uppercase Greek letters while preserving punctuation; masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €`. Amount fields omit the euro symbol because their existing suffix supplies it. Privacy mode starts enabled when stored data exists and does not change the stored plan.

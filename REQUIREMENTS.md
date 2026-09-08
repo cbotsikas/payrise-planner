@@ -7,6 +7,7 @@ The main header stays visible while scrolling and compacts into a smaller title-
 ## Team and budget
 
 - Team members can be added, renamed, and removed. Each has an editable current annual salary.
+- Resetting a plan retains team members, salaries, the budget, budget-inclusion settings, and saved scenarios; it clears allocation locks and custom allocations before returning to the selected automatic split.
 - The annual budget can be entered either as a Euro amount or as a percentage. Editing either value calculates the other from the total salaries of currently unlocked team members.
 - A budget is a ceiling: allocations may be lower, but never exceed it.
 - The overview shows budget, allocated amount, remaining amount, and total team salaries. Each person can be included or excluded from the salary basis used when a percentage budget is entered.
