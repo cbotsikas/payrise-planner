@@ -3,6 +3,7 @@ const euroFmt = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'})
 const numFmt = new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 let state = load() || {members:[], budget:0, distributionMode:'amount', scenarios:[]};
 let privacyMode=Boolean(state.budget||state.members?.some(member=>Number(member.salary)||Number(member.increase))||state.scenarios?.length);
+const privacyMasks=new Map();
 state.scenarios=Array.isArray(state.scenarios)?state.scenarios:[];
 state.scenarios.forEach((scenario,index)=>{if(typeof scenario.name!=='string'||!scenario.name.trim())scenario.name=`Scenario ${state.scenarios.length-index}`});
 // Query within a freshly cloned template when a root is supplied; otherwise
@@ -10,7 +11,7 @@ state.scenarios.forEach((scenario,index)=>{if(typeof scenario.name!=='string'||!
 const $ = (selector, root = document) => root.querySelector(selector);
 const round = n => Math.round((Number(n)||0)*100)/100;
 function parse(value){ return Number(String(value||'').trim().replace(/\./g,'').replace(',','.')) || 0; }
-function scramble(value){const greek=[...'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ'];const randomLetter=()=>greek[Math.floor(Math.random()*greek.length)];const source=String(value);const digits=source.match(/\d/g)||[];if(digits.length<=7)return source.replace(/\d/g,randomLetter);const suffix=source.includes('€')?' €':'';return `${randomLetter()}${randomLetter()}.${randomLetter()}${randomLetter()}${randomLetter()},${randomLetter()}${randomLetter()}${suffix}`;}
+function scramble(value){const source=String(value);const numericKey=String(parse(source.replace(/[^\d,.-]/g,'')));const greek=[...'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ'];const randomLetter=()=>greek[Math.floor(Math.random()*greek.length)];const digits=source.match(/\d/g)||[];const tokenCount=Math.max(digits.length<=7?digits.length:7,1);const tokens=privacyMasks.get(numericKey)||Array.from({length:tokenCount},randomLetter);privacyMasks.set(numericKey,tokens);if(digits.length<=7){let index=0;return source.replace(/\d/g,()=>tokens[index++%tokens.length]);}return `${tokens[0]}${tokens[1]}.${tokens[2]}${tokens[3]}${tokens[4]},${tokens[5]}${tokens[6]}${source.includes('€')?' €':''}`;}
 function money(n){const value=euroFmt.format(round(n));return privacyMode?scramble(value):value;} function pct(n){return numFmt.format(n)+' %';}
 function setAmountInput(input,value,{numeric=false,decimals=2}={}){const visible=Number(value||0).toLocaleString('de-DE',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});if(privacyMode){input.type='text';input.readOnly=true;input.value=scramble(visible)}else{input.type=numeric?'number':'text';input.readOnly=false;input.value=numeric?String(round(value)):visible;}}
 function uid(){return crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random().toString(16).slice(2);}
@@ -71,7 +72,7 @@ function refreshLiveAllocations(activeField){
     const percent=m.salary?m.increase/m.salary*100:0;
     const pctInput=$('.increase-pct',card), euroInput=$('.increase-euro',card), slider=$('.slider',card);
     if(pctInput!==activeField)pctInput.value=String(round(percent));
-    if(euroInput!==activeField)euroInput.value=String(round(m.increase));
+    if(euroInput!==activeField)setAmountInput(euroInput,m.increase,{numeric:true,decimals:2});
     slider.value=Math.min(Number(slider.max),Math.round(percent*10)/10);
     const availableEuro=round(Math.max(0,state.budget-state.members.filter(x=>x.id!==m.id&&x.locked).reduce((sum,x)=>sum+x.increase,0)));
     paintSlider(slider,m.increase,availableEuro);
