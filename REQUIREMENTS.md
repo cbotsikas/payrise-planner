@@ -30,4 +30,4 @@ The main header stays visible while scrolling and compacts into a smaller title-
 - Users can independently encrypt exports and local browser storage with a passphrase using browser-native encryption. Passphrases are never stored or recoverable.
 - A confirmed clear-all action permanently removes the current plan and all saved scenarios from browser storage.
 - A visual privacy mode replaces displayed amount digits with random uppercase Greek letters while preserving punctuation. Each numeric value uses the same mask for the current page session regardless of formatting. Masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €` and cannot reveal a salary range; amount fields omit the euro symbol because their suffix supplies it. It starts enabled when stored data exists, can be toggled from the page or with `Ctrl+Q`, and does not change stored data.
-- A fixed on-screen indicator is visible while privacy mode is active.
+- A fixed on-screen indicator is visible while privacy mode is active. Users can disable its default automatic activation when opening stored data.

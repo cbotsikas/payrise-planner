@@ -1,5 +1,6 @@
 const STORAGE = 'payrise-planner-v1';
 const ENCRYPTED_STORAGE = 'payrise-planner-encrypted-v1';
+const PREFERENCES_STORAGE = 'payrise-planner-preferences-v1';
 const EXPORT_VERSION = 1;
 const euroFmt = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
 const numFmt = new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -7,7 +8,8 @@ let state = {members:[], budget:0, distributionMode:'amount', scenarios:[]};
 let storagePassphrase = null;
 let encryptedStorage = false;
 let saveQueue = Promise.resolve();
-let privacyMode=Boolean(state.budget||state.members?.some(member=>Number(member.salary)||Number(member.increase))||state.scenarios?.length);
+let autoHideAmounts = loadPreferences().autoHideAmounts !== false;
+let privacyMode=false;
 const privacyMasks=new Map();
 state.scenarios=Array.isArray(state.scenarios)?state.scenarios:[];
 state.scenarios.forEach((scenario,index)=>{if(typeof scenario.name!=='string'||!scenario.name.trim())scenario.name=`Scenario ${state.scenarios.length-index}`});
@@ -58,6 +60,8 @@ function paintSlider(slider,increase,availableEuro){
 }
 function save(){const snapshot=structuredClone(state);saveQueue=saveQueue.then(async()=>{if(encryptedStorage){localStorage.setItem(ENCRYPTED_STORAGE,JSON.stringify(await encryptPayload(snapshot,storagePassphrase)));localStorage.removeItem(STORAGE)}else localStorage.setItem(STORAGE,JSON.stringify(snapshot));});return saveQueue;}
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE));}catch{return null}}
+function loadPreferences(){try{return JSON.parse(localStorage.getItem(PREFERENCES_STORAGE))||{};}catch{return {}}}
+function savePreferences(){localStorage.setItem(PREFERENCES_STORAGE,JSON.stringify({autoHideAmounts}));}
 function distribute(){
   const open=active(); const fixed=state.members.filter(m=>m.locked).reduce((a,m)=>a+m.increase,0);
   const pool=Math.max(0,round(state.budget-fixed));
@@ -96,6 +100,7 @@ function refreshLiveAllocations(activeField){
 function render(){
   const has=state.members.length>0, elig=applicableSalary();
   $('#privacyToggle').setAttribute('aria-pressed',privacyMode);$('#privacyToggle').textContent=privacyMode?'Show € amounts':'Hide € amounts';
+  $('#autoHideAmounts').checked=autoHideAmounts;
   $('#storageEncryption').textContent=encryptedStorage?'Store local data normally':'Encrypt local data';
   $('#privacyNotice').hidden=!privacyMode;$('#privacyNotice').textContent=privacyMode?'€ amounts hidden · Ctrl+Q to show':'€ amounts shown';
   state.distributionMode=state.distributionMode==='percentage'?'percentage':'amount';
@@ -163,6 +168,7 @@ $('#clearData').onclick=()=>{if(confirm('Permanently delete the current plan and
 $('#exportData').onclick=()=>download({exportVersion:EXPORT_VERSION,...state},'payrise-planner-export.json');
 $('#exportEncrypted').onclick=async()=>{const passphrase=await askPassphrase(true);if(passphrase)download({exportVersion:EXPORT_VERSION,...await encryptPayload(state,passphrase)},'payrise-planner-encrypted-export.json')};
 $('#storageEncryption').onclick=async()=>{if(encryptedStorage){if(confirm('Store this plan without encryption in this browser?')){encryptedStorage=false;storagePassphrase=null;localStorage.setItem(STORAGE,JSON.stringify(state));localStorage.removeItem(ENCRYPTED_STORAGE);render()}return}if(!confirm('Encrypt local browser data? You will need this passphrase every time you open the app. A forgotten passphrase cannot be recovered.'))return;const passphrase=await askPassphrase(true);if(!passphrase)return;encryptedStorage=true;storagePassphrase=passphrase;await save();render()};
+$('#autoHideAmounts').onchange=e=>{autoHideAmounts=e.target.checked;savePreferences()};
 $('#importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{let imported=JSON.parse(r.result);if(imported.encrypted){const passphrase=await askPassphrase();if(!passphrase)return;imported=await decryptPayload(imported,passphrase)}if((imported.exportVersion!==undefined&&imported.exportVersion!==EXPORT_VERSION)||!Array.isArray(imported.members)||!Array.isArray(imported.scenarios))throw Error();state=normalizeImported(imported);render()}catch{alert('This file is not valid, unsupported, or the passphrase is incorrect.')}};r.readAsText(f);e.target.value=''};
-async function initialize(){const encrypted=localStorage.getItem(ENCRYPTED_STORAGE);if(encrypted){try{const passphrase=await askPassphrase();if(!passphrase)throw Error();state=normalizeImported(await decryptPayload(JSON.parse(encrypted),passphrase));encryptedStorage=true;storagePassphrase=passphrase}catch{alert('Encrypted local data could not be unlocked. Your data remains in this browser; reload the page to try again.')}}else state=load()||state;privacyMode=Boolean(state.budget||state.members?.some(member=>Number(member.salary)||Number(member.increase))||state.scenarios?.length);render();}
+async function initialize(){const encrypted=localStorage.getItem(ENCRYPTED_STORAGE);if(encrypted){try{const passphrase=await askPassphrase();if(!passphrase)throw Error();state=normalizeImported(await decryptPayload(JSON.parse(encrypted),passphrase));encryptedStorage=true;storagePassphrase=passphrase}catch{alert('Encrypted local data could not be unlocked. Your data remains in this browser; reload the page to try again.')}}else state=load()||state;privacyMode=autoHideAmounts&&Boolean(state.budget||state.members?.some(member=>Number(member.salary)||Number(member.increase))||state.scenarios?.length);render();}
 initialize();

@@ -44,7 +44,7 @@ Each allocation slider includes a legend for the amount allocated to that person
 
 Use **Clear all data** to permanently remove the active plan and every saved scenario from the current browser.
 
-Use **Hide € amounts** (or `Ctrl+Q`) to toggle visual privacy mode. It replaces digits with random uppercase Greek letters while preserving punctuation; each numeric value keeps the same mask for the current page session, regardless of whether it is shown as `0`, `0,00`, or `0 €`. Masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €`. Amount fields omit the euro symbol because their existing suffix supplies it. Privacy mode starts enabled when stored data exists and does not change the stored plan.
+Use **Hide € amounts** (or `Ctrl+Q`) to toggle visual privacy mode. It replaces digits with random uppercase Greek letters while preserving punctuation; each numeric value keeps the same mask for the current page session, regardless of whether it is shown as `0`, `0,00`, or `0 €`. Masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €`. Amount fields omit the euro symbol because their existing suffix supplies it. Privacy mode starts enabled when stored data exists; disable **Automatically hide € amounts on open** if you prefer values to remain visible after opening or reloading the app.
 
 When privacy mode is active, a fixed on-screen indicator reminds you that euro amounts are hidden and that `Ctrl+Q` reveals them.
 
