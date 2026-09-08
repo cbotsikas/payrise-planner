@@ -36,7 +36,7 @@ Current planner data and saved scenarios are stored in the browser’s `localSto
 
 Use **Export** to create a portable JSON backup before clearing browser data or moving to another browser or device.
 
-Use **Reset plan** to clear custom allocations and locks while retaining the team, salaries, budget, budget-inclusion choices, and saved scenarios. The retained budget is then split again using the selected automatic mode.
+Use **Reset plan** to clear custom allocations and fixed amounts while retaining the team, salaries, budget, budget-inclusion choices, and saved scenarios. The retained budget is then split again using the selected automatic mode.
 
 Each allocation slider includes a legend for the amount allocated to that person, the amount still available, and amounts committed to other locked people. The **Auto split** control explains whether a member will change with the available budget or has a fixed allocation.
 

@@ -51,12 +51,17 @@
     .reset-action { color:var(--muted); }.reset-action:hover { color:#a44742; }
     .data-action { display:inline-flex; align-items:center; min-height:38px; padding:8px 11px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--green); font:inherit; font-weight:700; cursor:pointer; }.data-action:hover { border-color:#b9dbc9; background:#f6fbf8; }
     .data-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }.data-tools { border:1px solid var(--line); background:white; box-shadow:var(--shadow); }
+    .team-actions { display:flex; align-items:center; gap:8px; }
     .hero { position: sticky; top: 0; z-index: 20; padding: 14px 0; border-bottom: 1px solid transparent; background: transparent; transition: padding .24s ease, background .24s ease, box-shadow .24s ease; }
     .hero h1 { transition: font-size .24s ease, letter-spacing .24s ease; }
     .hero .eyebrow, .hero .subtitle { max-height: 40px; overflow: hidden; opacity: 1; transform: translateY(0); transition: max-height .24s ease, margin .24s ease, opacity .16s ease, transform .24s ease; }
     .hero.is-sticky { align-items: center; padding: 8px 0; border-bottom-color: rgba(220, 229, 225, .65); background: rgba(245, 247, 244, .58); -webkit-backdrop-filter: blur(9px) saturate(115%); backdrop-filter: blur(9px) saturate(115%); box-shadow: 0 5px 14px #17332c08; }
     .hero.is-sticky .eyebrow, .hero.is-sticky .subtitle { max-height: 0; margin-top: 0; margin-bottom: 0; opacity: 0; pointer-events: none; transform: translateY(-6px); }
     .hero.is-sticky h1 { font-size: 21px; letter-spacing: -.6px; }
+    .sticky-remaining { display:none; align-items:center; max-width:0; min-height:34px; padding:7px 0; overflow:hidden; border:1px solid transparent; border-radius:999px; background:#fff5e8; color:#925817; font-size:12px; font-weight:700; white-space:nowrap; opacity:0; transform:scale(.88) translateY(-5px); transition:max-width .28s ease, padding .28s ease, border-color .2s ease, opacity .18s ease, transform .28s cubic-bezier(.2,.8,.2,1); }
+    .hero.is-sticky .sticky-remaining { display:inline-flex; }
+    .hero.is-sticky.show-remaining .sticky-remaining { max-width:230px; padding:7px 10px; border-color:#f0d4ae; opacity:1; transform:scale(1) translateY(0); }
+    .sticky-remaining strong { margin-left:5px; color:var(--ink); }
     @media (prefers-reduced-motion: reduce) { .hero, .hero h1, .hero .eyebrow, .hero .subtitle { transition: none; } }
     .privacy-notice { position: fixed; right: 20px; bottom: 20px; z-index: 10; padding: 10px 13px; border: 1px solid #c7d8d0; border-radius: 999px; background: #17332c; color: white; box-shadow: 0 8px 22px #17332c33; font-size: 13px; font-weight: 700; pointer-events:none; }
     button:focus-visible, summary:focus-visible, .scenario-drag:focus-visible { outline: 3px solid #0e765980; outline-offset: 3px; }
@@ -77,6 +82,7 @@
       .shell { padding-bottom:calc(104px + env(safe-area-inset-bottom)); }
       .header-actions { flex-wrap:wrap; justify-content:flex-start; gap:8px; margin-top:12px; }
       .header-actions .header-action:first-child { order:-1; }
+      .team-actions { gap:4px; }
       .budget-inputs { display:grid; grid-template-columns:1fr; gap:12px; }
       .budget-inputs .or { display:none; }
       .budget-inputs label { width:100%; }.budget-inputs input { width:100%; }
@@ -86,7 +92,7 @@
 </head>
 <body>
   <main class="shell">
-    <header class="hero"><div><p class="eyebrow">TEAM PLANNING</p><h1>PayRise Planner</h1><p class="subtitle">Allocate your annual pay-rise budget across your team with confidence.</p></div><div class="header-actions"><button id="saveScenario" class="header-action header-save" disabled>Save scenario</button><button id="privacyToggle" class="header-action header-muted" aria-pressed="false" title="Toggle privacy mode (Ctrl+Q)">Hide € amounts</button><button id="newPlan" class="header-action header-reset">Reset plan</button></div></header>
+    <header class="hero"><div><p class="eyebrow">TEAM PLANNING</p><h1>PayRise Planner</h1><p class="subtitle">Allocate your annual pay-rise budget across your team with confidence.</p></div><div class="header-actions"><output id="stickyRemaining" class="sticky-remaining" aria-live="polite">Remaining <strong>0,00 €</strong></output><button id="saveScenario" class="header-action header-save" disabled>Save scenario</button><button id="privacyToggle" class="header-action header-muted" aria-pressed="false" title="Toggle privacy mode (Ctrl+Q)">Hide € amounts</button></div></header>
 
     <section class="budget-card" aria-labelledby="budget-heading">
       <div><p class="eyebrow">ANNUAL BUDGET</p><h2 id="budget-heading">How much is available?</h2><p id="budgetHint" class="muted">Add team members to set your budget.</p><p class="budget-progress" id="budgetProgress" aria-live="polite"></p></div>
@@ -105,7 +111,7 @@
     </section>
 
     <section class="members-section">
-      <div class="section-heading"><div><p class="eyebrow">YOUR TEAM</p><h2>Salaries &amp; increases</h2></div><button id="addMember" class="primary">+ Team member</button></div>
+      <div class="section-heading"><div><p class="eyebrow">YOUR TEAM</p><h2>Salaries &amp; increases</h2></div><div class="team-actions"><button id="newPlan" class="text-button danger-button reset-action">Reset plan</button><button id="addMember" class="primary">+ Team member</button></div></div>
       <div class="distribution-controls"><label for="distributionMode">Automatic split for unlocked people</label><select id="distributionMode"><option value="amount">Equal euro amounts</option><option value="percentage">Equal percentage increases</option></select></div>
       <p id="memberHelp" class="helper">Unlocked people share the remaining budget in equal euro amounts. Changing a value locks that allocation automatically.</p>
       <div id="emptyState" class="empty"><div class="empty-icon">€</div><h3>No team yet</h3><p>Add your first team member and their current annual salary.</p><button class="primary add-empty">Add team member</button></div>

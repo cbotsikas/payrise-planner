@@ -78,12 +78,14 @@ function refreshLiveAllocations(activeField){
     $('.slider-value',card).textContent=pct(percent);
     $('.new-salary-value',card).textContent=money(m.salary+m.increase);
     $('.lock',card).setAttribute('aria-pressed',m.locked);
-    $('.lock-text',card).textContent=m.locked?'Locked':'Auto split';
+    $('.lock-text',card).textContent=m.locked?'Fixed':'Auto split';
     $('.lock-symbol',card).textContent=m.locked?'●':'⌁';
     $('.lock',card).title=m.locked?'Fixed: excluded from automatic redistribution.':'Auto split: this person updates when the available budget changes.';
   });
   $('#totalAllocated').textContent=money(allocated());
   $('#remaining').textContent=money(remaining());
+  $('#stickyRemaining').innerHTML=`Remaining <strong>${money(remaining())}</strong>`;
+  updateStickyHeader();
 }
 function render(){
   const has=state.members.length>0, elig=applicableSalary();
@@ -91,13 +93,13 @@ function render(){
   $('#privacyNotice').hidden=!privacyMode;$('#privacyNotice').textContent=privacyMode?'€ amounts hidden · Ctrl+Q to show':'€ amounts shown';
   state.distributionMode=state.distributionMode==='percentage'?'percentage':'amount';
   $('#distributionMode').value=state.distributionMode;
-  $('#budgetEuro').disabled=!has; $('#budgetPct').disabled=!has; $('#saveScenario').disabled=!has;
+  $('#budgetEuro').disabled=!has; $('#budgetPct').disabled=!has; $('#saveScenario').disabled=!has;$('#stickyRemaining').hidden=!has;
   if(document.activeElement!==$('#budgetEuro')||privacyMode)setAmountInput($('#budgetEuro'),state.budget,{decimals:2});
   if(document.activeElement!==$('#budgetPct'))$('#budgetPct').value=elig ? (state.budget/elig*100).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}) : '';
   $('#budgetHint').textContent=has ? `Enter either value; the other updates automatically. Percentage budget is based on ${money(elig)} of included team salaries.` : 'Add team members to set your budget.';
   $('#budgetProgress').textContent=has ? `${money(allocated())} of ${money(state.budget)} allocated (${state.budget?Math.round(allocated()/state.budget*100):0}%)` : '';
-  $('#memberHelp').textContent=state.distributionMode==='percentage' ? 'Unlocked people receive the same percentage increase. Changing a value locks that allocation automatically.' : 'Unlocked people share the remaining budget in equal euro amounts. Changing a value locks that allocation automatically.';
-  $('#totalBudget').textContent=money(state.budget);$('#totalAllocated').textContent=money(allocated());$('#remaining').textContent=money(remaining());$('#totalSalaries').textContent=money(totalSalary());
+  $('#memberHelp').textContent=state.distributionMode==='percentage' ? 'People on Auto split receive the same percentage increase. Changing a value fixes that allocation automatically.' : 'People on Auto split share the remaining budget in equal euro amounts. Changing a value fixes that allocation automatically.';
+  $('#totalBudget').textContent=money(state.budget);$('#totalAllocated').textContent=money(allocated());$('#remaining').textContent=money(remaining());$('#stickyRemaining').innerHTML=`Remaining <strong>${money(remaining())}</strong>`;$('#totalSalaries').textContent=money(totalSalary());
   $('#emptyState').hidden=has; $('#members').innerHTML=''; const tpl=$('#memberTemplate');
   state.members.forEach(m=>{const el=tpl.content.firstElementChild.cloneNode(true);
     // An automatic allocation can be raised to the whole budget: its peers will be
@@ -114,7 +116,7 @@ function render(){
     $('.name',el).value=m.name;setAmountInput($('.salary',el),m.salary,{decimals:2});$('.included',el).checked=m.included!==false;
     $('.increase-pct',el).value=String(round(m.salary?m.increase/m.salary*100:0));setAmountInput($('.increase-euro',el),m.increase,{numeric:true,decimals:2});$('.new-salary-value',el).textContent=money(m.salary+m.increase);
     const slider=$('.slider',el);slider.max=Math.floor(maxPct*10)/10;slider.value=Math.min(slider.max,Math.round((m.salary?m.increase/m.salary*100:0)*10)/10);paintSlider(slider,m.increase,maxEuro);$('.increase-pct',el).max=slider.max;$('.increase-euro',el).max=maxEuro;$('.slider-value',el).textContent=pct(m.salary?m.increase/m.salary*100:0); slider.disabled=!m.salary;
-    const lock=$('.lock',el);lock.setAttribute('aria-pressed',m.locked);lock.title=m.locked?'Fixed: excluded from automatic redistribution.':'Auto split: this person updates when the available budget changes.';$('.lock-text',el).textContent=m.locked?'Locked':'Auto split';$('.lock-symbol',el).textContent=m.locked?'●':'⌁';
+    const lock=$('.lock',el);lock.setAttribute('aria-pressed',m.locked);lock.title=m.locked?'Fixed: excluded from automatic redistribution.':'Auto split: this person updates when the available budget changes.';$('.lock-text',el).textContent=m.locked?'Fixed':'Auto split';$('.lock-symbol',el).textContent=m.locked?'●':'⌁';
     $('.name',el).onchange=e=>{m.name=e.target.value||'Unnamed';save();render()};$('.salary',el).onchange=e=>{m.salary=Math.max(0,round(parse(e.target.value)));distribute();save();render()};$('.included',el).onchange=e=>{m.included=e.target.checked;save();render()};
     lock.onclick=()=>{m.locked=!m.locked;distribute();save();render()};$('.remove',el).onclick=()=>{state.members=state.members.filter(x=>x.id!==m.id);distribute();save();render()};
     const manual=e=>{const currentMax=round(Math.max(0,state.budget-state.members.filter(x=>x.id!==m.id&&x.locked).reduce((sum,x)=>sum+x.increase,0)));m.increase=round(Math.min(currentMax,Math.max(0,e)));m.locked=true;distribute();save();render()};
@@ -135,7 +137,7 @@ function render(){
     const liveManual=(field,value)=>{const currentMax=round(Math.max(0,state.budget-state.members.filter(x=>x.id!==m.id&&x.locked).reduce((sum,x)=>sum+x.increase,0)));const capped=round(Math.min(currentMax,Math.max(0,value)));m.increase=capped;m.locked=true;distribute();save();if(field.classList.contains('increase-pct')&&m.salary&&Math.abs(value-capped/m.salary*100)>0.00001)field.value=String(round(capped/m.salary*100));if(field.classList.contains('increase-euro')&&value!==capped)field.value=String(capped);refreshLiveAllocations(field)};
     $('.increase-pct',el).oninput=e=>liveManual(e.target,m.salary*(Number(e.target.value)||0)/100);$('.increase-euro',el).oninput=e=>liveManual(e.target,Number(e.target.value)||0); $('#members').append(el);
   });
-  $('#scenarioEmpty').hidden=state.scenarios.length>0;$('#scenarios').innerHTML='';state.scenarios.forEach((s,index)=>renderScenario(s,index)); save();
+  $('#scenarioEmpty').hidden=state.scenarios.length>0;$('#scenarios').innerHTML='';state.scenarios.forEach((s,index)=>renderScenario(s,index)); save();updateStickyHeader();
 }
 function renderScenario(s,index){const el=$('#scenarioTemplate').content.firstElementChild.cloneNode(true);$('.scenario-title',el).value=s.name;$('.scenario-title',el).onchange=e=>{s.name=e.target.value.trim()||s.name;save();render()};$('.scenario-date',el).textContent=new Date(s.savedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'});$('.scenario-totals',el).innerHTML=`<div><span>Budget</span><b>${money(s.budget)}</b></div><div><span>Allocated</span><b>${money(s.members.reduce((a,m)=>a+m.increase,0))}</b></div><div><span>Remaining</span><b>${money(Math.max(0,s.budget-s.members.reduce((a,m)=>a+m.increase,0)))}</b></div>`;$('.scenario-members',el).innerHTML=s.members.map(m=>`<div class="scenario-member"><b>${escapeHtml(m.name)}</b><span>${pct(m.salary?m.increase/m.salary*100:0)}</span><span>+ ${money(m.increase)}</span><span>${money(m.salary+m.increase)}</span></div>`).join('');$('.restore',el).onclick=()=>{if(confirm('Restore this scenario? It will replace the current team allocations and budget.')){state.members=structuredClone(s.members);state.budget=s.budget;state.distributionMode=s.distributionMode==='percentage'?'percentage':'amount';distribute();render()}};$('.delete',el).onclick=()=>{state.scenarios.splice(index,1);render()};const drag=$('.scenario-drag',el);drag.ondragstart=e=>{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(index));el.classList.add('dragging')};drag.ondragend=()=>document.querySelectorAll('.scenario').forEach(card=>card.classList.remove('dragging','drop-before','drop-after'));el.ondragover=e=>{e.preventDefault();const before=e.clientY<el.getBoundingClientRect().top+el.offsetHeight/2;el.classList.toggle('drop-before',before);el.classList.toggle('drop-after',!before)};el.ondragleave=()=>el.classList.remove('drop-before','drop-after');el.ondrop=e=>{e.preventDefault();const source=Number(e.dataTransfer.getData('text/plain'));if(!Number.isInteger(source)||source===index)return;const before=e.clientY<el.getBoundingClientRect().top+el.offsetHeight/2;let destination=index+(before?0:1);const [moved]=state.scenarios.splice(source,1);if(source<destination)destination--;state.scenarios.splice(destination,0,moved);save();render()};$('#scenarios').append(el)}
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
@@ -143,10 +145,10 @@ function add(){state.members.push({id:uid(),name:'New team member',salary:0,incr
 $('#addMember').onclick=add;$('.add-empty').onclick=add;$('#budgetEuro').onchange=e=>setBudget(parse(e.target.value));$('#budgetPct').onchange=e=>setBudget(applicableSalary()*parse(e.target.value)/100);
 $('#distributionMode').onchange=e=>{state.distributionMode=e.target.value==='percentage'?'percentage':'amount';distribute();render()};
 $('#saveScenario').onclick=()=>{state.scenarios.unshift({name:`Scenario ${state.scenarios.length+1}`,savedAt:Date.now(),budget:state.budget,distributionMode:state.distributionMode,members:structuredClone(state.members)});render()};
-$('#newPlan').onclick=()=>{if(confirm('Reset allocations and locks? Team members, salaries, budget, and saved scenarios will be kept.')){state.members.forEach(member=>{member.increase=0;member.locked=false});distribute();render()}};
+$('#newPlan').onclick=()=>{if(confirm('Reset allocations and fixed amounts? Team members, salaries, budget, and saved scenarios will be kept.')){state.members.forEach(member=>{member.increase=0;member.locked=false});distribute();render()}};
 function togglePrivacy(){privacyMode=!privacyMode;$('#privacyToggle').setAttribute('aria-pressed',privacyMode);$('#privacyToggle').textContent=privacyMode?'Show € amounts':'Hide € amounts';render()}
 $('#privacyToggle').onclick=togglePrivacy;window.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q'){e.preventDefault();togglePrivacy()}});
-const hero=$('.hero');const stickyThreshold=4;const updateStickyHeader=()=>hero.classList.toggle('is-sticky',window.scrollY>stickyThreshold);window.addEventListener('scroll',updateStickyHeader,{passive:true});updateStickyHeader();
+const hero=$('.hero');const budgetCard=$('.budget-card');const stickyThreshold=4;const updateStickyHeader=()=>{const sticky=window.scrollY>stickyThreshold;hero.classList.toggle('is-sticky',sticky);hero.classList.toggle('show-remaining',sticky&&remaining()>0&&budgetCard.getBoundingClientRect().bottom<=hero.getBoundingClientRect().bottom)};window.addEventListener('scroll',updateStickyHeader,{passive:true});updateStickyHeader();
 $('#clearData').onclick=()=>{if(confirm('Permanently delete the current plan and every saved scenario from this browser? Export your data first if you may need it later.')){localStorage.removeItem(STORAGE);state={members:[],budget:0,distributionMode:'amount',scenarios:[]};render()}};
 $('#exportData').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='payrise-planner-export.json';a.click();URL.revokeObjectURL(a.href)};
 $('#importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const imported=JSON.parse(r.result);if(!Array.isArray(imported.members)||!Array.isArray(imported.scenarios))throw Error();state=normalizeImported(imported);render()}catch{alert('This file is not a valid export.')}};r.readAsText(f);e.target.value=''};
