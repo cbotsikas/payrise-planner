@@ -1,138 +1,949 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PayRise Planner</title>
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-    h1, h2, h3 { font-family: ui-serif, Georgia, serif; }
-    .member-card { padding: 12px 18px; }
-    .member-top { display: grid; grid-template-columns: minmax(180px, 1fr) 170px max-content 32px; align-items: end; gap: 14px; }
-    .member-name { display: contents; }
-    .name { grid-column: 1; }
-    .member-name > label:not(.include-budget) { grid-column: 2; }
-    .include-budget { grid-column: 3; align-self: center; }
-    .remove { grid-column: 4; align-self: center; }
-    .allocation { margin-top: 10px; padding-top: 10px; }
-    .allocation-head strong { display: flex; align-items: center; gap: 6px; }
-    .allocation-head small { color: var(--muted); font-size: 11px; font-weight: 500; }
-    .slider-row { margin: 12px 0; }
-    .allocation-fields { grid-template-columns: minmax(120px, 1fr) minmax(135px, 1fr) minmax(170px, 1.25fr); gap: 14px; }
-    .distribution-controls { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); }
-    .distribution-controls select { font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: white; padding: 8px 10px; }
-    .include-budget { display: flex !important; align-items: center; gap: 6px; font-size: 12px !important; font-weight: 600 !important; white-space: nowrap; }
-    .include-budget input { width: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--green); }
-    .slider { -webkit-appearance: none; appearance: none; background: transparent; }
-    .slider::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: repeating-linear-gradient(135deg, rgba(190, 83, 76, .10) 0 4px, rgba(190, 83, 76, .24) 4px 6px) right / calc(100% - var(--unavailable-start, 100%)) 100% no-repeat, linear-gradient(to right, var(--green) 0 var(--slider-value, 0%), #d7dfdb var(--slider-value, 0%) var(--unavailable-start, 100%), #f6e8e6 var(--unavailable-start, 100%) 100%); }
-    .slider::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--green); }
-    .slider::-moz-range-track { height: 6px; border-radius: 999px; background: repeating-linear-gradient(135deg, rgba(190, 83, 76, .10) 0 4px, rgba(190, 83, 76, .24) 4px 6px) right / calc(100% - var(--unavailable-start, 100%)) 100% no-repeat, linear-gradient(to right, var(--green) 0 var(--slider-value, 0%), #d7dfdb var(--slider-value, 0%) var(--unavailable-start, 100%), #f6e8e6 var(--unavailable-start, 100%) 100%); }
-    .slider::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--green); }
-    .scenario-identity { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .scenario-drag { width: 22px; padding: 2px 0; border: 0; background: transparent; color: #94a39d; font-size: 17px; line-height: 1; cursor: grab; }
-    .scenario-drag:active { cursor: grabbing; }
-    .scenario.dragging { opacity: .45; }
-    .scenario.drop-before { box-shadow: inset 0 3px 0 var(--green); }
-    .scenario.drop-after { box-shadow: inset 0 -3px 0 var(--green); }
-    .scenario-title { width: 180px; padding: 2px 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; font-size: 16px; font-weight: 700; }
-    .scenario-title:focus { box-shadow: none; border-bottom-color: var(--green); }
-    .danger-button { color: #a44742; }
-    .header-actions { display: flex; align-items: center; gap: 8px; }
-    .header-actions .header-action { min-height:42px; padding:10px 13px; border:1px solid #b9dbc9; border-radius:8px; background:#f6fbf8; color:var(--green); font:inherit; font-weight:700; cursor:pointer; }
-    .header-actions .header-action:hover { background:#ecf7f1; }.header-actions .header-action:disabled { opacity:.5; cursor:not-allowed; }
-    .header-actions .header-save { border-color:var(--green); background:var(--green); color:white; }.header-actions .header-save:hover { background:#095e46; }
-    .header-actions .header-reset { border-color:transparent; background:transparent; color:var(--muted); }.header-actions .header-reset:hover { border-color:#f0c5c1; background:#fff3f1; color:#a44742; }
-    .header-actions .header-muted { border-color:transparent; background:transparent; color:var(--green); }.header-actions .header-muted:hover { border-color:#b9dbc9; background:#ecf7f1; }
-    .primary { min-height:42px; }.secondary, .text-button { min-height:38px; }
-    .lock { min-height:32px; }.restore { min-height:32px; padding:6px 9px; border:1px solid transparent; border-radius:7px; }.restore:hover { border-color:#b9dbc9; background:#ecf7f1; }
-    .remove, .delete { display:inline-grid; place-items:center; width:32px; height:32px; min-width:32px; min-height:32px; padding:0; border:1px solid transparent; border-radius:7px; background:white; font-size:18px; }.scenario-drag { display:inline-grid; place-items:center; min-width:32px; min-height:32px; border-radius:7px; }.remove:hover, .delete:hover, .remove:focus-visible, .delete:focus-visible { border-color:#f0c5c1; background:#fff3f1; color:#a44742; }
-    .text-button { border:1px solid transparent; }.text-button:hover { border-color:#b9dbc9; background:#f6fbf8; }.danger-button:hover { border-color:#f0c5c1; background:#fff3f1; }
-    .reset-action { color:var(--muted); }.reset-action:hover { color:#a44742; }
-    .data-action { display:inline-flex; align-items:center; min-height:38px; padding:8px 11px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--green); font:inherit; font-weight:700; cursor:pointer; }.data-action:hover { border-color:#b9dbc9; background:#f6fbf8; }
-    .data-actions, .data-action-group { display:flex; flex-wrap:wrap; align-items:center; }.data-actions { gap:18px; }.data-action-group { gap:8px; }.data-tools { border:1px solid var(--line); background:white; box-shadow:var(--shadow); }
-    .preference-row { flex-basis:100%; }.preference-toggle { display:inline-flex; align-items:center; min-height:38px; gap:7px; padding:8px 4px; color:var(--muted); font-size:12px; font-weight:700; }.preference-toggle input { width:15px; height:15px; margin:0; padding:0; accent-color:var(--green); }
-    .passphrase-dialog { width:min(420px,calc(100vw - 32px)); padding:0; border:1px solid var(--line); border-radius:14px; color:var(--ink); box-shadow:0 18px 55px #17332c33; }.passphrase-dialog::backdrop { background:#17332c66; backdrop-filter:blur(2px); }.passphrase-dialog form { display:grid; gap:15px; padding:24px; }.passphrase-dialog h2 { font-size:22px; }.passphrase-dialog p { margin:0; color:var(--muted); font-size:13px; line-height:1.45; }.passphrase-dialog label { display:grid; gap:7px; font-size:12px; font-weight:700; color:var(--muted); }.passphrase-dialog [hidden] { display:none !important; }.passphrase-dialog .dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:3px; }
-    .team-actions { display:flex; align-items:center; gap:8px; }
-    .hero { position: sticky; top: 0; z-index: 20; padding: 14px 0; border-bottom: 1px solid transparent; background: transparent; transition: padding .24s ease, background .24s ease, box-shadow .24s ease; }
-    .hero h1 { transition: font-size .24s ease, letter-spacing .24s ease; }
-    .hero .eyebrow, .hero .subtitle { max-height: 40px; overflow: hidden; opacity: 1; transform: translateY(0); transition: max-height .24s ease, margin .24s ease, opacity .16s ease, transform .24s ease; }
-    .hero.is-sticky { align-items: center; padding: 8px 0; border-bottom-color: rgba(220, 229, 225, .65); background: rgba(245, 247, 244, .58); -webkit-backdrop-filter: blur(9px) saturate(115%); backdrop-filter: blur(9px) saturate(115%); box-shadow: 0 5px 14px #17332c08; }
-    .hero.is-sticky .eyebrow, .hero.is-sticky .subtitle { max-height: 0; margin-top: 0; margin-bottom: 0; opacity: 0; pointer-events: none; transform: translateY(-6px); }
-    .hero.is-sticky h1 { font-size: 21px; letter-spacing: -.6px; }
-    .sticky-remaining { display:none; align-items:center; max-width:0; min-height:34px; padding:7px 0; overflow:hidden; border:1px solid transparent; border-radius:999px; background:#fff5e8; color:#925817; font-size:12px; font-weight:700; white-space:nowrap; opacity:0; transform:scale(.88) translateY(-5px); transition:max-width .28s ease, padding .28s ease, border-color .2s ease, opacity .18s ease, transform .28s cubic-bezier(.2,.8,.2,1); }
-    .hero.is-sticky .sticky-remaining { display:inline-flex; }
-    .hero.is-sticky.show-remaining .sticky-remaining { max-width:230px; padding:7px 10px; border-color:#f0d4ae; opacity:1; transform:scale(1) translateY(0); }
-    .sticky-remaining strong { margin-left:5px; color:var(--ink); }
-    @media (prefers-reduced-motion: reduce) { .hero, .hero h1, .hero .eyebrow, .hero .subtitle { transition: none; } }
-    .privacy-notice { position: fixed; right: 20px; bottom: 20px; z-index: 10; padding: 10px 13px; border: 1px solid #c7d8d0; border-radius: 999px; background: #17332c; color: white; box-shadow: 0 8px 22px #17332c33; font-size: 13px; font-weight: 700; pointer-events:none; }
-    button:focus-visible, summary:focus-visible, .scenario-drag:focus-visible { outline: 3px solid #0e765980; outline-offset: 3px; }
-    .slider-legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin:-5px 0 12px; color:var(--muted); font-size:11px; }
-    .slider-legend span { display:flex; align-items:center; gap:5px; }
-    .slider-legend i { width:9px; height:9px; border-radius:50%; background:var(--green); }
-    .slider-legend .available i { background:#d7dfdb; }.slider-legend .committed i { background:#c56f69; }
-    .budget-progress { margin:9px 0 0; color:var(--muted); font-size:12px; font-weight:600; }
-    .scenarios-section { margin-top:42px; }.overview { margin-bottom:40px; }.scenario-totals { flex-wrap:wrap; }
-    @media (max-width: 720px) {
-      .hero.is-sticky h1 { font-size: 20px; }
-      .member-top { grid-template-columns: 1fr 130px 28px; gap: 10px; }
-      .include-budget { grid-column: 1 / span 2; grid-row: 2; }
-      .remove { grid-column: 3; grid-row: 1; }
-      .allocation-fields { grid-template-columns: 1fr 1fr; }
-      .new-salary { grid-column: span 2; }
-      .distribution-controls { align-items: flex-start; flex-direction: column; gap: 5px; }
-      .shell { padding-bottom:calc(104px + env(safe-area-inset-bottom)); }
-      .header-actions { flex-wrap:wrap; justify-content:flex-start; gap:8px; margin-top:12px; }
-      .header-actions .header-action:first-child { order:-1; }
-      .team-actions { gap:4px; }
-      .budget-inputs { display:grid; grid-template-columns:1fr; gap:12px; }
-      .budget-inputs .or { display:none; }
-      .budget-inputs label { width:100%; }.budget-inputs input { width:100%; }
-      .scenario-totals { gap:9px 14px; }.privacy-notice { right:12px; bottom:max(12px, env(safe-area-inset-bottom)); max-width:calc(100vw - 24px); }
-    }
-  </style>
-</head>
-<body>
-  <main class="shell">
-    <header class="hero"><div><p class="eyebrow">TEAM PLANNING</p><h1>PayRise Planner</h1><p class="subtitle">Allocate your annual pay-rise budget across your team with confidence.</p></div><div class="header-actions"><output id="stickyRemaining" class="sticky-remaining" aria-live="polite">Remaining <strong>0,00 €</strong></output><button id="saveScenario" class="header-action header-save" disabled>Save scenario</button><button id="privacyToggle" class="header-action header-muted" aria-pressed="false" title="Toggle privacy mode (Ctrl+Q)">Hide € amounts</button></div></header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PayRise Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: ui-serif, Georgia, serif;
+      }
+      .member-card {
+        padding: 12px 18px;
+      }
+      .member-top {
+        display: grid;
+        grid-template-columns: minmax(180px, 1fr) 170px max-content 32px;
+        align-items: end;
+        gap: 14px;
+      }
+      .member-name {
+        display: contents;
+      }
+      .name {
+        grid-column: 1;
+      }
+      .member-name > label:not(.include-budget) {
+        grid-column: 2;
+      }
+      .include-budget {
+        grid-column: 3;
+        align-self: center;
+      }
+      .remove {
+        grid-column: 4;
+        align-self: center;
+      }
+      .allocation {
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+      .allocation-head strong {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .allocation-head small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .slider-row {
+        margin: 12px 0;
+      }
+      .allocation-fields {
+        grid-template-columns: minmax(120px, 1fr) minmax(135px, 1fr) minmax(
+            170px,
+            1.25fr
+          );
+        gap: 14px;
+      }
+      .distribution-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .distribution-controls select {
+        font: inherit;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        padding: 8px 10px;
+      }
+      .include-budget {
+        display: flex !important;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        white-space: nowrap;
+      }
+      .include-budget input {
+        width: 15px;
+        height: 15px;
+        margin: 0;
+        padding: 0;
+        accent-color: var(--green);
+      }
+      .slider {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+      }
+      .slider::-webkit-slider-runnable-track {
+        height: 6px;
+        border-radius: 999px;
+        background:
+          repeating-linear-gradient(
+              135deg,
+              rgba(190, 83, 76, 0.1) 0 4px,
+              rgba(190, 83, 76, 0.24) 4px 6px
+            )
+            right / calc(100% - var(--unavailable-start, 100%)) 100% no-repeat,
+          linear-gradient(
+            to right,
+            var(--green) 0 var(--slider-value, 0%),
+            #d7dfdb var(--slider-value, 0%) var(--unavailable-start, 100%),
+            #f6e8e6 var(--unavailable-start, 100%) 100%
+          );
+      }
+      .slider::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+        margin-top: -5px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      .slider::-moz-range-track {
+        height: 6px;
+        border-radius: 999px;
+        background:
+          repeating-linear-gradient(
+              135deg,
+              rgba(190, 83, 76, 0.1) 0 4px,
+              rgba(190, 83, 76, 0.24) 4px 6px
+            )
+            right / calc(100% - var(--unavailable-start, 100%)) 100% no-repeat,
+          linear-gradient(
+            to right,
+            var(--green) 0 var(--slider-value, 0%),
+            #d7dfdb var(--slider-value, 0%) var(--unavailable-start, 100%),
+            #f6e8e6 var(--unavailable-start, 100%) 100%
+          );
+      }
+      .slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      .scenario-identity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .scenario-drag {
+        width: 22px;
+        padding: 2px 0;
+        border: 0;
+        background: transparent;
+        color: #94a39d;
+        font-size: 17px;
+        line-height: 1;
+        cursor: grab;
+      }
+      .scenario-drag:active {
+        cursor: grabbing;
+      }
+      .scenario.dragging {
+        opacity: 0.45;
+      }
+      .scenario.drop-before {
+        box-shadow: inset 0 3px 0 var(--green);
+      }
+      .scenario.drop-after {
+        box-shadow: inset 0 -3px 0 var(--green);
+      }
+      .scenario-title {
+        width: 180px;
+        padding: 2px 0;
+        border: 0;
+        border-bottom: 1px solid transparent;
+        border-radius: 0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .scenario-title:focus {
+        box-shadow: none;
+        border-bottom-color: var(--green);
+      }
+      .danger-button {
+        color: #a44742;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .header-actions .header-action {
+        min-height: 42px;
+        padding: 10px 13px;
+        border: 1px solid #b9dbc9;
+        border-radius: 8px;
+        background: #f6fbf8;
+        color: var(--green);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .header-actions .header-action:hover {
+        background: #ecf7f1;
+      }
+      .header-actions .header-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .header-actions .header-save {
+        border-color: var(--green);
+        background: var(--green);
+        color: white;
+      }
+      .header-actions .header-save:hover {
+        background: #095e46;
+      }
+      .header-actions .header-reset {
+        border-color: transparent;
+        background: transparent;
+        color: var(--muted);
+      }
+      .header-actions .header-reset:hover {
+        border-color: #f0c5c1;
+        background: #fff3f1;
+        color: #a44742;
+      }
+      .header-actions .header-muted {
+        border-color: transparent;
+        background: transparent;
+        color: var(--green);
+      }
+      .header-actions .header-muted:hover {
+        border-color: #b9dbc9;
+        background: #ecf7f1;
+      }
+      .primary {
+        min-height: 42px;
+      }
+      .secondary,
+      .text-button {
+        min-height: 38px;
+      }
+      .lock {
+        min-height: 32px;
+      }
+      .restore {
+        min-height: 32px;
+        padding: 6px 9px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+      }
+      .restore:hover {
+        border-color: #b9dbc9;
+        background: #ecf7f1;
+      }
+      .remove,
+      .delete {
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        background: white;
+        font-size: 18px;
+      }
+      .scenario-drag {
+        display: inline-grid;
+        place-items: center;
+        min-width: 32px;
+        min-height: 32px;
+        border-radius: 7px;
+      }
+      .remove:hover,
+      .delete:hover,
+      .remove:focus-visible,
+      .delete:focus-visible {
+        border-color: #f0c5c1;
+        background: #fff3f1;
+        color: #a44742;
+      }
+      .text-button {
+        border: 1px solid transparent;
+      }
+      .text-button:hover {
+        border-color: #b9dbc9;
+        background: #f6fbf8;
+      }
+      .danger-button:hover {
+        border-color: #f0c5c1;
+        background: #fff3f1;
+      }
+      .reset-action {
+        color: var(--muted);
+      }
+      .reset-action:hover {
+        color: #a44742;
+      }
+      .data-action {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 11px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--green);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .data-action:hover {
+        border-color: #b9dbc9;
+        background: #f6fbf8;
+      }
+      .data-actions,
+      .data-action-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .data-actions {
+        gap: 18px;
+      }
+      .data-action-group {
+        gap: 8px;
+      }
+      .data-tools {
+        border: 1px solid var(--line);
+        background: white;
+        box-shadow: var(--shadow);
+      }
+      .preference-row {
+        flex-basis: 100%;
+      }
+      .preference-toggle {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        gap: 7px;
+        padding: 8px 4px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .preference-toggle input {
+        width: 15px;
+        height: 15px;
+        margin: 0;
+        padding: 0;
+        accent-color: var(--green);
+      }
+      .passphrase-dialog {
+        width: min(420px, calc(100vw - 32px));
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        color: var(--ink);
+        box-shadow: 0 18px 55px #17332c33;
+      }
+      .passphrase-dialog::backdrop {
+        background: #17332c66;
+        backdrop-filter: blur(2px);
+      }
+      .passphrase-dialog form {
+        display: grid;
+        gap: 15px;
+        padding: 24px;
+      }
+      .passphrase-dialog h2 {
+        font-size: 22px;
+      }
+      .passphrase-dialog p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .passphrase-dialog label {
+        display: grid;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .passphrase-dialog [hidden] {
+        display: none !important;
+      }
+      .passphrase-dialog .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 3px;
+      }
+      .team-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .hero {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        padding: 14px 0;
+        border-bottom: 1px solid transparent;
+        background: transparent;
+        transition:
+          padding 0.24s ease,
+          background 0.24s ease,
+          box-shadow 0.24s ease;
+      }
+      .hero h1 {
+        transition:
+          font-size 0.24s ease,
+          letter-spacing 0.24s ease;
+      }
+      .hero .eyebrow,
+      .hero .subtitle {
+        max-height: 40px;
+        overflow: hidden;
+        opacity: 1;
+        transform: translateY(0);
+        transition:
+          max-height 0.24s ease,
+          margin 0.24s ease,
+          opacity 0.16s ease,
+          transform 0.24s ease;
+      }
+      .hero.is-sticky {
+        align-items: center;
+        padding: 8px 0;
+        border-bottom-color: rgba(220, 229, 225, 0.65);
+        background: rgba(245, 247, 244, 0.58);
+        -webkit-backdrop-filter: blur(9px) saturate(115%);
+        backdrop-filter: blur(9px) saturate(115%);
+        box-shadow: 0 5px 14px #17332c08;
+      }
+      .hero.is-sticky .eyebrow,
+      .hero.is-sticky .subtitle {
+        max-height: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-6px);
+      }
+      .hero.is-sticky h1 {
+        font-size: 21px;
+        letter-spacing: -0.6px;
+      }
+      .sticky-remaining {
+        display: none;
+        align-items: center;
+        max-width: 0;
+        min-height: 34px;
+        padding: 7px 0;
+        overflow: hidden;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        background: #fff5e8;
+        color: #925817;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        opacity: 0;
+        transform: scale(0.88) translateY(-5px);
+        transition:
+          max-width 0.28s ease,
+          padding 0.28s ease,
+          border-color 0.2s ease,
+          opacity 0.18s ease,
+          transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .hero.is-sticky .sticky-remaining {
+        display: inline-flex;
+      }
+      .hero.is-sticky.show-remaining .sticky-remaining {
+        max-width: 230px;
+        padding: 7px 10px;
+        border-color: #f0d4ae;
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+      .sticky-remaining strong {
+        margin-left: 5px;
+        color: var(--ink);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .hero,
+        .hero h1,
+        .hero .eyebrow,
+        .hero .subtitle {
+          transition: none;
+        }
+      }
+      .privacy-notice {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 10;
+        padding: 10px 13px;
+        border: 1px solid #c7d8d0;
+        border-radius: 999px;
+        background: #17332c;
+        color: white;
+        box-shadow: 0 8px 22px #17332c33;
+        font-size: 13px;
+        font-weight: 700;
+        pointer-events: none;
+      }
+      button:focus-visible,
+      summary:focus-visible,
+      .scenario-drag:focus-visible {
+        outline: 3px solid #0e765980;
+        outline-offset: 3px;
+      }
+      .slider-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        margin: -5px 0 12px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .slider-legend span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .slider-legend i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      .slider-legend .available i {
+        background: #d7dfdb;
+      }
+      .slider-legend .committed i {
+        background: #c56f69;
+      }
+      .budget-progress {
+        margin: 9px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .scenarios-section {
+        margin-top: 42px;
+      }
+      .overview {
+        margin-bottom: 40px;
+      }
+      .scenario-totals {
+        flex-wrap: wrap;
+      }
+      @media (max-width: 720px) {
+        .hero.is-sticky h1 {
+          font-size: 20px;
+        }
+        .member-top {
+          grid-template-columns: 1fr 130px 28px;
+          gap: 10px;
+        }
+        .include-budget {
+          grid-column: 1 / span 2;
+          grid-row: 2;
+        }
+        .remove {
+          grid-column: 3;
+          grid-row: 1;
+        }
+        .allocation-fields {
+          grid-template-columns: 1fr 1fr;
+        }
+        .new-salary {
+          grid-column: span 2;
+        }
+        .distribution-controls {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 5px;
+        }
+        .shell {
+          padding-bottom: calc(104px + env(safe-area-inset-bottom));
+        }
+        .header-actions {
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          gap: 8px;
+          margin-top: 12px;
+        }
+        .header-actions .header-action:first-child {
+          order: -1;
+        }
+        .team-actions {
+          gap: 4px;
+        }
+        .budget-inputs {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .budget-inputs .or {
+          display: none;
+        }
+        .budget-inputs label {
+          width: 100%;
+        }
+        .budget-inputs input {
+          width: 100%;
+        }
+        .scenario-totals {
+          gap: 9px 14px;
+        }
+        .privacy-notice {
+          right: 12px;
+          bottom: max(12px, env(safe-area-inset-bottom));
+          max-width: calc(100vw - 24px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">TEAM PLANNING</p>
+          <h1>PayRise Planner</h1>
+          <p class="subtitle">
+            Allocate your annual pay-rise budget across your team with
+            confidence.
+          </p>
+        </div>
+        <div class="header-actions">
+          <output
+            id="stickyRemaining"
+            class="sticky-remaining"
+            aria-live="polite"
+            >Remaining <strong>0,00 €</strong></output
+          ><button id="saveScenario" class="header-action header-save" disabled>
+            Save scenario</button
+          ><button
+            id="privacyToggle"
+            class="header-action header-muted"
+            aria-pressed="false"
+            title="Toggle privacy mode (Ctrl+Q)"
+          >
+            Hide € amounts
+          </button>
+        </div>
+      </header>
 
-    <section class="budget-card" aria-labelledby="budget-heading">
-      <div><p class="eyebrow">ANNUAL BUDGET</p><h2 id="budget-heading">How much is available?</h2><p id="budgetHint" class="muted">Add team members to set your budget.</p><p class="budget-progress" id="budgetProgress" aria-live="polite"></p></div>
-      <div class="budget-inputs">
-        <label>Set budget as amount<span class="input-wrap"><input id="budgetEuro" inputmode="decimal" placeholder="0,00" disabled><b>€</b></span></label>
-        <span class="or">or</span>
-        <label>Set budget as percentage<span class="input-wrap"><input id="budgetPct" inputmode="decimal" placeholder="0,0" disabled><b>%</b></span></label>
-      </div>
-    </section>
+      <section class="budget-card" aria-labelledby="budget-heading">
+        <div>
+          <p class="eyebrow">ANNUAL BUDGET</p>
+          <h2 id="budget-heading">How much is available?</h2>
+          <p id="budgetHint" class="muted">
+            Add team members to set your budget.
+          </p>
+          <p class="budget-progress" id="budgetProgress" aria-live="polite"></p>
+        </div>
+        <div class="budget-inputs">
+          <label
+            >Set budget as amount<span class="input-wrap"
+              ><input
+                id="budgetEuro"
+                inputmode="decimal"
+                placeholder="0,00"
+                disabled
+              /><b>€</b></span
+            ></label
+          >
+          <span class="or">or</span>
+          <label
+            >Set budget as percentage<span class="input-wrap"
+              ><input
+                id="budgetPct"
+                inputmode="decimal"
+                placeholder="0,0"
+                disabled
+              /><b>%</b></span
+            ></label
+          >
+        </div>
+      </section>
 
-    <section class="overview" aria-label="Budget overview">
-      <div><span>Budget</span><strong id="totalBudget">0,00 €</strong></div>
-      <div><span>Allocated</span><strong id="totalAllocated">0,00 €</strong></div>
-      <div class="remaining"><span>Remaining</span><strong id="remaining">0,00 €</strong></div>
-      <div><span>Total team salaries</span><strong id="totalSalaries">0,00 €</strong></div>
-    </section>
+      <section class="overview" aria-label="Budget overview">
+        <div><span>Budget</span><strong id="totalBudget">0,00 €</strong></div>
+        <div>
+          <span>Allocated</span><strong id="totalAllocated">0,00 €</strong>
+        </div>
+        <div class="remaining">
+          <span>Remaining</span><strong id="remaining">0,00 €</strong>
+        </div>
+        <div>
+          <span>Total team salaries</span
+          ><strong id="totalSalaries">0,00 €</strong>
+        </div>
+      </section>
 
-    <section class="members-section">
-      <div class="section-heading"><div><p class="eyebrow">YOUR TEAM</p><h2>Salaries &amp; increases</h2></div><div class="team-actions"><button id="newPlan" class="text-button danger-button reset-action">Reset plan</button><button id="addMember" class="primary">+ Team member</button></div></div>
-      <div class="distribution-controls"><label for="distributionMode">Automatic split for unlocked people</label><select id="distributionMode"><option value="amount">Equal euro amounts</option><option value="percentage">Equal percentage increases</option></select></div>
-      <p id="memberHelp" class="helper">Unlocked people share the remaining budget in equal euro amounts. Changing a value locks that allocation automatically.</p>
-      <div id="emptyState" class="empty"><div class="empty-icon">€</div><h3>No team yet</h3><p>Add your first team member and their current annual salary.</p><button class="primary add-empty">Add team member</button></div>
-      <div id="members" class="members"></div>
-    </section>
+      <section class="members-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR TEAM</p>
+            <h2>Salaries &amp; increases</h2>
+          </div>
+          <div class="team-actions">
+            <button id="newPlan" class="text-button danger-button reset-action">
+              Reset plan</button
+            ><button id="addMember" class="primary">+ Team member</button>
+          </div>
+        </div>
+        <div class="distribution-controls">
+          <label for="distributionMode"
+            >Automatic split for unlocked people</label
+          ><select id="distributionMode">
+            <option value="amount">Equal euro amounts</option>
+            <option value="percentage">Equal percentage increases</option>
+          </select>
+        </div>
+        <p id="memberHelp" class="helper">
+          Unlocked people share the remaining budget in equal euro amounts.
+          Changing a value locks that allocation automatically.
+        </p>
+        <div id="emptyState" class="empty">
+          <div class="empty-icon">€</div>
+          <h3>No team yet</h3>
+          <p>Add your first team member and their current annual salary.</p>
+          <button class="primary add-empty">Add team member</button>
+        </div>
+        <div id="members" class="members"></div>
+      </section>
 
-    <section class="scenarios-section">
-      <div class="section-heading"><div><p class="eyebrow">OPTIONS</p><h2>Saved scenarios</h2></div></div>
-      <div id="scenarioEmpty" class="scenario-empty">Save a scenario to compare different allocations.</div>
-      <div id="scenarios" class="scenarios"></div>
-    </section>
+      <section class="scenarios-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">OPTIONS</p>
+            <h2>Saved scenarios</h2>
+          </div>
+        </div>
+        <div id="scenarioEmpty" class="scenario-empty">
+          Save a scenario to compare different allocations.
+        </div>
+        <div id="scenarios" class="scenarios"></div>
+      </section>
 
-    <section class="data-tools"><div><h2>Your data</h2><p>All data stays in this browser.</p></div><div class="data-actions"><div class="data-action-group"><button id="exportData" class="data-action">Export</button><button id="exportEncrypted" class="data-action">Export encrypted</button><label class="data-action import-label">Import<input id="importData" type="file" accept="application/json"></label></div><div class="data-action-group"><button id="storageEncryption" class="text-button">Encrypt local data</button><button id="clearData" class="text-button danger-button reset-action">Clear all data</button></div><div class="preference-row"><label class="preference-toggle"><input id="autoHideAmounts" type="checkbox" checked> Automatically hide € amounts on open</label></div></div></section>
-  </main>
-  <div id="privacyNotice" class="privacy-notice" role="status" hidden>€ amounts hidden · Ctrl+Q to show</div>
-  <dialog id="passphraseDialog" class="passphrase-dialog"><form id="passphraseForm"><h2 id="passphraseTitle">Enter passphrase</h2><p id="passphraseMessage">Passphrases are never stored and cannot be recovered.</p><label>Passphrase<input id="passphraseInput" type="password" autocomplete="current-password" required></label><label id="passphraseConfirmRow" hidden>Confirm passphrase<input id="passphraseConfirm" type="password" autocomplete="new-password"></label><p id="passphraseError" role="alert" hidden></p><div class="dialog-actions"><button id="passphraseCancel" type="button" class="text-button">Cancel</button><button type="submit" class="primary">Continue</button></div></form></dialog>
-  <template id="memberTemplate"><article class="member-card"><div class="member-top"><div class="member-name"><input class="name" aria-label="Team member name" title="Team member name"><label>Annual salary <span class="input-wrap salary-wrap"><input class="salary" inputmode="decimal" aria-label="Annual salary"><b>€</b></span></label><label class="include-budget" title="Includes this salary only when calculating a budget entered as a percentage. It does not prevent this person from receiving an increase."><input class="included" type="checkbox" checked> Include in budget %</label></div><button class="remove" title="Remove team member" aria-label="Remove team member">×</button></div><div class="allocation"><div class="allocation-head"><strong>Planned increase <small>— enter either form</small></strong><button class="lock" aria-pressed="false" title="Auto split: this person changes with the available budget."><span class="lock-symbol">⌁</span><span class="lock-text">Auto split</span></button></div><div class="slider-row"><input class="slider" type="range" min="0" step="0.1" value="0" aria-label="Increase percentage"><output class="slider-value">0,0 %</output></div><div class="slider-legend" aria-label="Allocation slider legend"><span><i></i>Allocated to this person</span><span class="available"><i></i>Still available</span><span class="committed"><i></i>Committed to others</span></div><div class="allocation-fields"><label>Set increase as %<input class="increase-pct" type="number" min="0" step="0.1" inputmode="decimal"></label><label>Set increase as €<span class="input-wrap"><input class="increase-euro" type="number" min="0" step="0.01" inputmode="decimal"><b>€</b></span></label><div class="new-salary"><span>New annual salary</span><strong class="new-salary-value">0,00 €</strong></div></div></div></article></template>
-  <template id="scenarioTemplate"><article class="scenario"><div class="scenario-head"><div class="scenario-identity"><button class="scenario-drag" draggable="true" title="Drag to reorder" aria-label="Drag scenario to reorder">⠿</button><div><input class="scenario-title" aria-label="Scenario name"><span class="scenario-date"></span></div></div><div class="scenario-actions"><button class="restore">Restore</button><button class="delete" aria-label="Delete scenario">×</button></div></div><div class="scenario-totals"></div><details><summary>View allocation</summary><div class="scenario-members"></div></details></article></template>
-  <script src="crypto.js"></script>
-  <script src="app.js"></script>
-</body>
+      <section class="data-tools">
+        <div>
+          <h2>Your data</h2>
+          <p>All data stays in this browser.</p>
+        </div>
+        <div class="data-actions">
+          <div class="data-action-group">
+            <button id="exportData" class="data-action">Export</button
+            ><button id="exportEncrypted" class="data-action">
+              Export encrypted</button
+            ><label class="data-action import-label"
+              >Import<input
+                id="importData"
+                type="file"
+                accept="application/json"
+            /></label>
+          </div>
+          <div class="data-action-group">
+            <button id="storageEncryption" class="text-button">
+              Encrypt local data</button
+            ><button
+              id="clearData"
+              class="text-button danger-button reset-action"
+            >
+              Clear all data
+            </button>
+          </div>
+          <div class="preference-row">
+            <label class="preference-toggle"
+              ><input id="autoHideAmounts" type="checkbox" checked />
+              Automatically hide € amounts on open</label
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="privacyNotice" class="privacy-notice" role="status" hidden>
+      € amounts hidden · Ctrl+Q to show
+    </div>
+    <dialog id="passphraseDialog" class="passphrase-dialog">
+      <form id="passphraseForm">
+        <h2 id="passphraseTitle">Enter passphrase</h2>
+        <p id="passphraseMessage">
+          Passphrases are never stored and cannot be recovered.
+        </p>
+        <label
+          >Passphrase<input
+            id="passphraseInput"
+            type="password"
+            autocomplete="current-password"
+            required /></label
+        ><label id="passphraseConfirmRow" hidden
+          >Confirm passphrase<input
+            id="passphraseConfirm"
+            type="password"
+            autocomplete="new-password"
+        /></label>
+        <p id="passphraseError" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="passphraseCancel" type="button" class="text-button">
+            Cancel</button
+          ><button type="submit" class="primary">Continue</button>
+        </div>
+      </form>
+    </dialog>
+    <template id="memberTemplate"
+      ><article class="member-card">
+        <div class="member-top">
+          <div class="member-name">
+            <input
+              class="name"
+              aria-label="Team member name"
+              title="Team member name"
+            /><label
+              >Annual salary
+              <span class="input-wrap salary-wrap"
+                ><input
+                  class="salary"
+                  inputmode="decimal"
+                  aria-label="Annual salary"
+                /><b>€</b></span
+              ></label
+            ><label
+              class="include-budget"
+              title="Includes this salary only when calculating a budget entered as a percentage. It does not prevent this person from receiving an increase."
+              ><input class="included" type="checkbox" checked /> Include in
+              budget %</label
+            >
+          </div>
+          <button
+            class="remove"
+            title="Remove team member"
+            aria-label="Remove team member"
+          >
+            ×
+          </button>
+        </div>
+        <div class="allocation">
+          <div class="allocation-head">
+            <strong>Planned increase <small>— enter either form</small></strong
+            ><button
+              class="lock"
+              aria-pressed="false"
+              title="Auto split: this person changes with the available budget."
+            >
+              <span class="lock-symbol">⌁</span
+              ><span class="lock-text">Auto split</span>
+            </button>
+          </div>
+          <div class="slider-row">
+            <input
+              class="slider"
+              type="range"
+              min="0"
+              step="0.1"
+              value="0"
+              aria-label="Increase percentage"
+            /><output class="slider-value">0,0 %</output>
+          </div>
+          <div class="slider-legend" aria-label="Allocation slider legend">
+            <span><i></i>Allocated to this person</span
+            ><span class="available"><i></i>Still available</span
+            ><span class="committed"><i></i>Committed to others</span>
+          </div>
+          <div class="allocation-fields">
+            <label
+              >Set increase as %<input
+                class="increase-pct"
+                type="number"
+                min="0"
+                step="0.1"
+                inputmode="decimal" /></label
+            ><label
+              >Set increase as €<span class="input-wrap"
+                ><input
+                  class="increase-euro"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                /><b>€</b></span
+              ></label
+            >
+            <div class="new-salary">
+              <span>New annual salary</span
+              ><strong class="new-salary-value">0,00 €</strong>
+            </div>
+          </div>
+        </div>
+      </article></template
+    >
+    <template id="scenarioTemplate"
+      ><article class="scenario">
+        <div class="scenario-head">
+          <div class="scenario-identity">
+            <button
+              class="scenario-drag"
+              draggable="true"
+              title="Drag to reorder"
+              aria-label="Drag scenario to reorder"
+            >
+              ⠿
+            </button>
+            <div>
+              <input class="scenario-title" aria-label="Scenario name" /><span
+                class="scenario-date"
+              ></span>
+            </div>
+          </div>
+          <div class="scenario-actions">
+            <button class="restore">Restore</button
+            ><button class="delete" aria-label="Delete scenario">×</button>
+          </div>
+        </div>
+        <div class="scenario-totals"></div>
+        <details>
+          <summary>View allocation</summary>
+          <div class="scenario-members"></div>
+        </details></article
+    ></template>
+    <script src="crypto.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>

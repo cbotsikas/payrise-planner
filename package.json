@@ -1,0 +1,16 @@
+{
+  "name": "payrise-planner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A local annual salary increase budget planner.",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write app.js crypto.js index.html styles.css README.md REQUIREMENTS.md package.json",
+    "format:check": "prettier --check app.js crypto.js index.html styles.css README.md REQUIREMENTS.md package.json"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
+  }
+}

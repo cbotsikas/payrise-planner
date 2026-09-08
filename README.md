@@ -57,15 +57,19 @@ This project was created with assistance from AI. Review and test the code befor
 - `index.html` — page structure and responsive layout rules
 - `styles.css` — visual styling
 - `app.js` — allocation logic, persistence, scenarios, and import/export
+- `crypto.js` — browser-native encryption helpers
 - `REQUIREMENTS.md` — detailed product requirements
 
 ## Development checks
 
-The app intentionally has no dependencies. Validate its JavaScript after a change with:
+The deployed app has no runtime dependencies. For development checks, install the local tooling with `npm install`, then run:
 
 ```sh
-node --check app.js
+npm run lint
+npm run format:check
 ```
+
+Use `npm run format` to apply the repository formatting rules.
 
 ## License
 
