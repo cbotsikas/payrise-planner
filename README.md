@@ -34,7 +34,7 @@ Alternatively, serve the folder with any static-file server. No build step or pa
 
 Current planner data and saved scenarios are stored in the browser’s `localStorage`. Nothing is sent to a remote service.
 
-Use **Export** to create a portable JSON backup before clearing browser data or moving to another browser or device.
+Use **Export** to create a portable JSON backup before clearing browser data or moving to another browser or device. Exports include an `exportVersion` field for future compatibility; earlier unversioned exports remain supported.
 
 Use **Reset plan** to clear custom allocations and fixed amounts while retaining the team, salaries, budget, budget-inclusion choices, and saved scenarios. The retained budget is then split again using the selected automatic mode.
 

@@ -1,4 +1,5 @@
 const STORAGE = 'payrise-planner-v1';
+const EXPORT_VERSION = 1;
 const euroFmt = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
 const numFmt = new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 let state = load() || {members:[], budget:0, distributionMode:'amount', scenarios:[]};
@@ -152,6 +153,6 @@ function togglePrivacy(){privacyMode=!privacyMode;$('#privacyToggle').setAttribu
 $('#privacyToggle').onclick=togglePrivacy;window.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q'){e.preventDefault();togglePrivacy()}});
 const hero=$('.hero');const budgetCard=$('.budget-card');const stickyThreshold=4;const updateStickyHeader=()=>{const sticky=window.scrollY>stickyThreshold;hero.classList.toggle('is-sticky',sticky);hero.classList.toggle('show-remaining',sticky&&remaining()>0&&budgetCard.getBoundingClientRect().bottom<=hero.getBoundingClientRect().bottom)};window.addEventListener('scroll',updateStickyHeader,{passive:true});updateStickyHeader();
 $('#clearData').onclick=()=>{if(confirm('Permanently delete the current plan and every saved scenario from this browser? Export your data first if you may need it later.')){localStorage.removeItem(STORAGE);state={members:[],budget:0,distributionMode:'amount',scenarios:[]};render()}};
-$('#exportData').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='payrise-planner-export.json';a.click();URL.revokeObjectURL(a.href)};
-$('#importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const imported=JSON.parse(r.result);if(!Array.isArray(imported.members)||!Array.isArray(imported.scenarios))throw Error();state=normalizeImported(imported);render()}catch{alert('This file is not a valid export.')}};r.readAsText(f);e.target.value=''};
+$('#exportData').onclick=()=>{const exported={exportVersion:EXPORT_VERSION,...state};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(exported,null,2)],{type:'application/json'}));a.download='payrise-planner-export.json';a.click();URL.revokeObjectURL(a.href)};
+$('#importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const imported=JSON.parse(r.result);if((imported.exportVersion!==undefined&&imported.exportVersion!==EXPORT_VERSION)||!Array.isArray(imported.members)||!Array.isArray(imported.scenarios))throw Error();state=normalizeImported(imported);render()}catch{alert('This file is not a valid export.')}};r.readAsText(f);e.target.value=''};
 render();

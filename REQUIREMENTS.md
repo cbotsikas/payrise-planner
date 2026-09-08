@@ -26,7 +26,7 @@ The main header stays visible while scrolling and compacts into a smaller title-
 
 - A saved scenario has an editable name and records the team, salaries, allocations, locks, automatic-split mode, budget, timestamp, totals, and remaining amount.
 - Saved scenarios remain in browser local storage, can be dragged into a preferred order, expanded to inspect the per-member breakdown, restored, or deleted.
-- The complete planner data can be exported as JSON and imported later.
+- The complete planner data can be exported as versioned JSON and imported later. Unversioned legacy exports remain supported; unsupported future export versions are rejected.
 - A confirmed clear-all action permanently removes the current plan and all saved scenarios from browser storage.
 - A visual privacy mode replaces displayed amount digits with random uppercase Greek letters while preserving punctuation. Each numeric value uses the same mask for the current page session regardless of formatting. Masks are capped at seven letters, so large amounts use a compact pattern such as `ΑΒ.ΓΔΕ,ΖΗ €` and cannot reveal a salary range; amount fields omit the euro symbol because their suffix supplies it. It starts enabled when stored data exists, can be toggled from the page or with `Ctrl+Q`, and does not change stored data.
 - A fixed on-screen indicator is visible while privacy mode is active.
