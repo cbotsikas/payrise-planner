@@ -39,8 +39,16 @@
     .scenario-title:focus { box-shadow: none; border-bottom-color: var(--green); }
     .danger-button { color: #a44742; }
     .header-actions { display: flex; align-items: center; gap: 5px; }
+    .hero { position: sticky; top: 0; z-index: 20; padding: 14px 0; border-bottom: 1px solid transparent; background: transparent; transition: padding .24s ease, background .24s ease, box-shadow .24s ease; }
+    .hero h1 { transition: font-size .24s ease, letter-spacing .24s ease; }
+    .hero .eyebrow, .hero .subtitle { max-height: 40px; overflow: hidden; opacity: 1; transform: translateY(0); transition: max-height .24s ease, margin .24s ease, opacity .16s ease, transform .24s ease; }
+    .hero.is-sticky { align-items: center; padding: 8px 0; border-bottom-color: rgba(220, 229, 225, .65); background: rgba(245, 247, 244, .58); -webkit-backdrop-filter: blur(9px) saturate(115%); backdrop-filter: blur(9px) saturate(115%); box-shadow: 0 5px 14px #17332c08; }
+    .hero.is-sticky .eyebrow, .hero.is-sticky .subtitle { max-height: 0; margin-top: 0; margin-bottom: 0; opacity: 0; pointer-events: none; transform: translateY(-6px); }
+    .hero.is-sticky h1 { font-size: 21px; letter-spacing: -.6px; }
+    @media (prefers-reduced-motion: reduce) { .hero, .hero h1, .hero .eyebrow, .hero .subtitle { transition: none; } }
     .privacy-notice { position: fixed; right: 20px; bottom: 20px; z-index: 10; padding: 10px 13px; border: 1px solid #c7d8d0; border-radius: 999px; background: #17332c; color: white; box-shadow: 0 8px 22px #17332c33; font-size: 13px; font-weight: 700; }
     @media (max-width: 720px) {
+      .hero.is-sticky h1 { font-size: 20px; }
       .member-top { grid-template-columns: 1fr 130px 28px; gap: 10px; }
       .include-budget { grid-column: 1 / span 2; grid-row: 2; }
       .remove { grid-column: 3; grid-row: 1; }

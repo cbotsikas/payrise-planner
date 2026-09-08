@@ -2,6 +2,8 @@
 
 PayRise Planner is a single-page, local-first tool for allocating an annual salary-increase budget. The UI is English; currency and number formatting use German Euro conventions (for example `4.512,43 €`). The application starts with an empty team.
 
+The main header stays visible while scrolling and compacts into a smaller title-and-actions bar after it becomes sticky.
+
 ## Team and budget
 
 - Team members can be added, renamed, and removed. Each has an editable current annual salary.
